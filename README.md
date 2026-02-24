@@ -1,6 +1,6 @@
 # Rsync Studio
 
-A cross-platform desktop application for managing rsync backup jobs. Built with Tauri v2, React, and TypeScript.
+A cross-platform desktop application for managing rsync backup jobs. Built with Tauri v2, React, TypeScript, and Rust.
 
 ## Features
 
@@ -20,6 +20,7 @@ A cross-platform desktop application for managing rsync backup jobs. Built with 
 
 ### Prerequisites
 
+- [Rsync](https://github.com/RsyncProject/rsync) (a relatively recent version)
 - [Rust](https://rustup.rs) (stable)
 - [Node.js](https://nodejs.org) (18+)
 - Platform-specific Tauri v2 dependencies (see [setup guide](docs/setup.md))
