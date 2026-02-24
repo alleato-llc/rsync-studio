@@ -5,9 +5,11 @@ import { HistoryPage } from "@/pages/history-page";
 import { StatisticsPage } from "@/pages/statistics-page";
 import { ToolsPage } from "@/pages/tools-page";
 import { SettingsPage } from "@/pages/settings-page";
+import { useTheme } from "@/hooks/use-theme";
 
 function App() {
   const [currentPage, setCurrentPage] = useState<NavPage>("jobs");
+  useTheme();
 
   return (
     <div className="flex min-h-screen">

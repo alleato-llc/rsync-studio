@@ -262,7 +262,7 @@ fn test_build_command_args_mirror_mode() {
         delete: true,
         ..RsyncOptions::default()
     };
-    let args = command_builder::build_rsync_args(&source, &dest, &options, None, None);
+    let args = command_builder::build_rsync_args(&source, &dest, &options, None, None, false);
 
     assert!(args.contains(&"-a".to_string()));
     assert!(args.contains(&"--delete".to_string()));
@@ -282,7 +282,7 @@ fn test_build_command_args_versioned_mode() {
         archive: true,
         ..RsyncOptions::default()
     };
-    let args = command_builder::build_rsync_args(&source, &dest, &options, None, None);
+    let args = command_builder::build_rsync_args(&source, &dest, &options, None, None, false);
 
     assert!(args.contains(&"-a".to_string()));
     assert!(args.contains(&"/src/".to_string()));
@@ -299,7 +299,7 @@ fn test_build_command_args_snapshot_mode() {
     };
     let options = RsyncOptions::default();
     let args =
-        command_builder::build_rsync_args(&source, &dest, &options, None, Some("/dst/prev/"));
+        command_builder::build_rsync_args(&source, &dest, &options, None, Some("/dst/prev/"), false);
 
     assert!(args.contains(&"--link-dest=/dst/prev/".to_string()));
 }
@@ -323,7 +323,7 @@ fn test_build_command_args_ssh_config() {
         custom_ssh_command: None,
     };
     let options = RsyncOptions::default();
-    let args = command_builder::build_rsync_args(&source, &dest, &options, Some(&ssh_config), None);
+    let args = command_builder::build_rsync_args(&source, &dest, &options, Some(&ssh_config), None, false);
 
     assert!(args.contains(&"-e".to_string()));
     let ssh_arg = args
@@ -347,7 +347,7 @@ fn test_build_command_args_excludes() {
         exclude_patterns: vec!["*.log".to_string(), "tmp/".to_string()],
         ..RsyncOptions::default()
     };
-    let args = command_builder::build_rsync_args(&source, &dest, &options, None, None);
+    let args = command_builder::build_rsync_args(&source, &dest, &options, None, None, false);
 
     assert!(args.contains(&"--exclude=*.log".to_string()));
     assert!(args.contains(&"--exclude=tmp/".to_string()));

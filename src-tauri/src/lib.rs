@@ -10,11 +10,14 @@ use chrono::Utc;
 use rsync_core::implementations::database::Database;
 use rsync_core::implementations::sqlite_invocation_repository::SqliteInvocationRepository;
 use rsync_core::implementations::sqlite_job_repository::SqliteJobRepository;
+use rsync_core::implementations::sqlite_settings_repository::SqliteSettingsRepository;
 use rsync_core::implementations::sqlite_snapshot_repository::SqliteSnapshotRepository;
 use rsync_core::implementations::sqlite_statistics_repository::SqliteStatisticsRepository;
 use rsync_core::models::backup::InvocationTrigger;
+use rsync_core::services::history_retention;
 use rsync_core::services::job_service::JobService;
 use rsync_core::services::scheduler;
+use rsync_core::services::settings_service::SettingsService;
 use rsync_core::services::statistics_service::StatisticsService;
 
 mod commands;
@@ -26,6 +29,9 @@ use state::AppState;
 /// How often the scheduler checks for due jobs (in seconds).
 const SCHEDULER_CHECK_INTERVAL_SECS: u64 = 300; // 5 minutes
 
+/// How many scheduler cycles between retention checks (~1 hour at 5min intervals).
+const RETENTION_CHECK_EVERY_N_CYCLES: u64 = 12;
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -35,12 +41,20 @@ pub fn run() {
                 .build(),
         )
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             let data_dir = app
                 .path()
                 .app_data_dir()
                 .expect("failed to resolve app data dir");
             std::fs::create_dir_all(&data_dir)?;
+
+            let log_dir = data_dir.join("logs");
+            std::fs::create_dir_all(&log_dir)?;
+            let default_log_dir = log_dir
+                .to_str()
+                .expect("invalid log dir path")
+                .to_string();
 
             let db_path = data_dir.join("rsync-studio.db");
             let database = Database::open(db_path.to_str().expect("invalid db path"))
@@ -50,17 +64,24 @@ pub fn run() {
             let jobs = Arc::new(SqliteJobRepository::new(conn.clone()));
             let invocations = Arc::new(SqliteInvocationRepository::new(conn.clone()));
             let snapshots = Arc::new(SqliteSnapshotRepository::new(conn.clone()));
-            let statistics_repo = Arc::new(SqliteStatisticsRepository::new(conn));
+            let statistics_repo = Arc::new(SqliteStatisticsRepository::new(conn.clone()));
+            let settings_repo = Arc::new(SqliteSettingsRepository::new(conn));
 
             let job_service = Arc::new(JobService::new(jobs, invocations, snapshots));
             let statistics_service = Arc::new(StatisticsService::new(statistics_repo));
+            let settings_service = Arc::new(SettingsService::new(settings_repo));
 
             app.manage(AppState {
                 _database: database,
                 job_service,
                 statistics_service,
+                settings_service,
                 running_jobs: execution::RunningJobs::new(),
+                default_log_dir,
             });
+
+            // --- Run history retention on startup ---
+            run_history_retention(&app.handle());
 
             // --- System tray ---
             setup_tray(app)?;
@@ -107,6 +128,18 @@ pub fn run() {
             commands::export_statistics,
             commands::reset_statistics,
             commands::reset_statistics_for_job,
+            commands::get_setting,
+            commands::set_setting,
+            commands::get_log_directory,
+            commands::set_log_directory,
+            commands::get_retention_settings,
+            commands::set_retention_settings,
+            commands::get_auto_trailing_slash,
+            commands::set_auto_trailing_slash,
+            commands::delete_invocation,
+            commands::delete_invocations_for_job,
+            commands::count_invocations,
+            commands::read_log_file,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -158,14 +191,69 @@ fn setup_tray(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+fn run_history_retention(app_handle: &tauri::AppHandle) {
+    let state: tauri::State<'_, AppState> = app_handle.state();
+    let settings_service = Arc::clone(&state.settings_service);
+    let job_service = Arc::clone(&state.job_service);
+
+    let retention = match settings_service.get_retention_settings() {
+        Ok(r) => r,
+        Err(e) => {
+            log::error!("Retention: failed to load settings: {}", e);
+            return;
+        }
+    };
+
+    let config = history_retention::HistoryRetentionConfig {
+        max_age_days: retention.max_log_age_days,
+        max_per_job: retention.max_history_per_job,
+    };
+
+    let all_invocations = match job_service.list_all_invocations() {
+        Ok(inv) => inv,
+        Err(e) => {
+            log::error!("Retention: failed to list invocations: {}", e);
+            return;
+        }
+    };
+
+    let to_prune = history_retention::compute_invocations_to_prune(&all_invocations, &config);
+
+    for (inv_id, log_path) in &to_prune {
+        // Delete log file if it exists
+        if let Some(path) = log_path {
+            if std::path::Path::new(path).exists() {
+                if let Err(e) = std::fs::remove_file(path) {
+                    log::error!("Retention: failed to delete log file {}: {}", path, e);
+                }
+            }
+        }
+        // Delete invocation from DB
+        if let Err(e) = job_service.delete_invocation(inv_id) {
+            log::error!("Retention: failed to delete invocation {}: {}", inv_id, e);
+        }
+    }
+
+    if !to_prune.is_empty() {
+        log::info!("Retention: pruned {} invocations", to_prune.len());
+    }
+}
+
 fn spawn_scheduler(app_handle: tauri::AppHandle) {
     std::thread::spawn(move || {
+        let mut cycle_count: u64 = 0;
         loop {
             std::thread::sleep(Duration::from_secs(SCHEDULER_CHECK_INTERVAL_SECS));
+            cycle_count += 1;
 
             let state: tauri::State<'_, AppState> = app_handle.state();
             let job_service = Arc::clone(&state.job_service);
             let statistics_service = Arc::clone(&state.statistics_service);
+
+            // Periodically run history retention
+            if cycle_count % RETENTION_CHECK_EVERY_N_CYCLES == 0 {
+                run_history_retention(&app_handle);
+            }
 
             let jobs = match job_service.list_jobs() {
                 Ok(j) => j,

@@ -101,3 +101,66 @@ export async function resetStatistics(): Promise<void> {
 export async function resetStatisticsForJob(jobId: string): Promise<void> {
   return invoke<void>("reset_statistics_for_job", { jobId });
 }
+
+// --- Settings ---
+
+export async function getSetting(key: string): Promise<string | null> {
+  return invoke<string | null>("get_setting", { key });
+}
+
+export async function setSetting(key: string, value: string): Promise<void> {
+  return invoke<void>("set_setting", { key, value });
+}
+
+export async function getLogDirectory(): Promise<string> {
+  return invoke<string>("get_log_directory");
+}
+
+export async function setLogDirectory(path: string): Promise<void> {
+  return invoke<void>("set_log_directory", { path });
+}
+
+export interface RetentionSettings {
+  max_log_age_days: number;
+  max_history_per_job: number;
+}
+
+export async function getRetentionSettings(): Promise<RetentionSettings> {
+  return invoke<RetentionSettings>("get_retention_settings");
+}
+
+export async function setRetentionSettings(
+  settings: RetentionSettings
+): Promise<void> {
+  return invoke<void>("set_retention_settings", { settings });
+}
+
+// --- Trailing slash ---
+
+export async function getAutoTrailingSlash(): Promise<boolean> {
+  return invoke<boolean>("get_auto_trailing_slash");
+}
+
+export async function setAutoTrailingSlash(enabled: boolean): Promise<void> {
+  return invoke<void>("set_auto_trailing_slash", { enabled });
+}
+
+// --- Delete history ---
+
+export async function deleteInvocation(invocationId: string): Promise<void> {
+  return invoke<void>("delete_invocation", { invocationId });
+}
+
+export async function deleteInvocationsForJob(jobId: string): Promise<void> {
+  return invoke<void>("delete_invocations_for_job", { jobId });
+}
+
+export async function countInvocations(): Promise<number> {
+  return invoke<number>("count_invocations");
+}
+
+// --- Log files ---
+
+export async function readLogFile(path: string): Promise<string> {
+  return invoke<string>("read_log_file", { path });
+}

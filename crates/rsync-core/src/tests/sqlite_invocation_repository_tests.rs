@@ -113,3 +113,58 @@ fn test_get_nonexistent_invocation() {
     let result = inv_repo.get_invocation(&Uuid::new_v4());
     assert!(result.is_err());
 }
+
+#[test]
+fn test_delete_invocation() {
+    let (job_repo, inv_repo) = setup();
+    let job = create_test_job();
+    job_repo.create_job(&job).unwrap();
+
+    let inv = make_invocation(job.id);
+    inv_repo.create_invocation(&inv).unwrap();
+
+    inv_repo.delete_invocation(&inv.id).unwrap();
+    let result = inv_repo.get_invocation(&inv.id);
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_delete_nonexistent_invocation() {
+    let (_job_repo, inv_repo) = setup();
+    let result = inv_repo.delete_invocation(&Uuid::new_v4());
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_delete_invocations_for_job() {
+    let (job_repo, inv_repo) = setup();
+    let job = create_test_job();
+    job_repo.create_job(&job).unwrap();
+
+    let inv1 = make_invocation(job.id);
+    let inv2 = make_invocation(job.id);
+    inv_repo.create_invocation(&inv1).unwrap();
+    inv_repo.create_invocation(&inv2).unwrap();
+
+    inv_repo.delete_invocations_for_job(&job.id).unwrap();
+    let list = inv_repo.list_invocations_for_job(&job.id).unwrap();
+    assert!(list.is_empty());
+}
+
+#[test]
+fn test_list_all_invocations() {
+    let (job_repo, inv_repo) = setup();
+    let job1 = create_test_job();
+    let mut job2 = create_test_job();
+    job2.name = "Other job".to_string();
+    job_repo.create_job(&job1).unwrap();
+    job_repo.create_job(&job2).unwrap();
+
+    let inv1 = make_invocation(job1.id);
+    let inv2 = make_invocation(job2.id);
+    inv_repo.create_invocation(&inv1).unwrap();
+    inv_repo.create_invocation(&inv2).unwrap();
+
+    let all = inv_repo.list_all_invocations().unwrap();
+    assert_eq!(all.len(), 2);
+}

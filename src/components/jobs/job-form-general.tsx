@@ -13,6 +13,7 @@ interface JobFormGeneralProps {
   onSourceChange: (source: JobDefinition["source"]) => void;
   onDestinationChange: (destination: JobDefinition["destination"]) => void;
   errors: Record<string, string>;
+  autoTrailingSlash?: boolean;
 }
 
 export function JobFormGeneral({
@@ -23,6 +24,7 @@ export function JobFormGeneral({
   onSourceChange,
   onDestinationChange,
   errors,
+  autoTrailingSlash,
 }: JobFormGeneralProps) {
   return (
     <div className="space-y-6">
@@ -64,6 +66,7 @@ export function JobFormGeneral({
         label="Source"
         value={job.source}
         onChange={onSourceChange}
+        autoTrailingSlash={autoTrailingSlash}
       />
       {errors.source && (
         <p className="text-sm text-destructive">{errors.source}</p>
@@ -73,6 +76,7 @@ export function JobFormGeneral({
         label="Destination"
         value={job.destination}
         onChange={onDestinationChange}
+        autoTrailingSlash={autoTrailingSlash}
       />
       {errors.destination && (
         <p className="text-sm text-destructive">{errors.destination}</p>

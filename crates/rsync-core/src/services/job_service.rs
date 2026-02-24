@@ -79,6 +79,22 @@ impl JobService {
         self.invocations.update_invocation(inv)
     }
 
+    pub fn get_invocation(&self, id: &Uuid) -> Result<BackupInvocation, AppError> {
+        self.invocations.get_invocation(id)
+    }
+
+    pub fn delete_invocation(&self, id: &Uuid) -> Result<(), AppError> {
+        self.invocations.delete_invocation(id)
+    }
+
+    pub fn delete_invocations_for_job(&self, job_id: &Uuid) -> Result<(), AppError> {
+        self.invocations.delete_invocations_for_job(job_id)
+    }
+
+    pub fn list_all_invocations(&self) -> Result<Vec<BackupInvocation>, AppError> {
+        self.invocations.list_all_invocations()
+    }
+
     pub fn get_job_history(
         &self,
         job_id: &Uuid,

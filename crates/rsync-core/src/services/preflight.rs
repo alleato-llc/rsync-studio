@@ -197,6 +197,7 @@ fn check_ssh_connectivity(job: &JobDefinition, rsync: &dyn RsyncClient) -> Valid
         &test_job.options,
         test_job.ssh_config.as_ref(),
         None,
+        false,
     );
     match rsync.dry_run(&args) {
         Ok(result) if result.exit_code == 0 => ValidationCheck {

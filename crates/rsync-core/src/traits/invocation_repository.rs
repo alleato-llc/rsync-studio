@@ -7,5 +7,8 @@ pub trait InvocationRepository: Send + Sync {
     fn create_invocation(&self, inv: &BackupInvocation) -> Result<(), AppError>;
     fn get_invocation(&self, id: &Uuid) -> Result<BackupInvocation, AppError>;
     fn list_invocations_for_job(&self, job_id: &Uuid) -> Result<Vec<BackupInvocation>, AppError>;
+    fn list_all_invocations(&self) -> Result<Vec<BackupInvocation>, AppError>;
     fn update_invocation(&self, inv: &BackupInvocation) -> Result<(), AppError>;
+    fn delete_invocation(&self, id: &Uuid) -> Result<(), AppError>;
+    fn delete_invocations_for_job(&self, job_id: &Uuid) -> Result<(), AppError>;
 }

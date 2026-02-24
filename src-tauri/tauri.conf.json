@@ -12,6 +12,7 @@
     "windows": [
       {
         "label": "main",
+        "title": "Rsync Studio | Manage Your Rsync Backups",
         "width": 1024,
         "height": 768
       }

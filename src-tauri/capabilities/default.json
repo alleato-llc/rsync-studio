@@ -6,6 +6,7 @@
   "permissions": [
     "core:default",
     "shell:allow-open",
-    "log:default"
+    "log:default",
+    "dialog:default"
   ]
 }

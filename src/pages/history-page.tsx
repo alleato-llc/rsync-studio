@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { Trash2, FileText, X } from "lucide-react";
 import type { JobDefinition } from "@/types/job";
 import type { BackupInvocation, SnapshotRecord } from "@/types/backup";
 import * as api from "@/lib/tauri";
@@ -65,6 +66,9 @@ export function HistoryPage() {
   const [snapshots, setSnapshots] = useState<SnapshotRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"invocations" | "snapshots">("invocations");
+  const [logContent, setLogContent] = useState<string | null>(null);
+  const [logError, setLogError] = useState<string | null>(null);
+  const [viewingLogId, setViewingLogId] = useState<string | null>(null);
 
   useEffect(() => {
     api.listJobs().then((j) => {
@@ -91,6 +95,58 @@ export function HistoryPage() {
     }
   }, [selectedJobId, loadHistory]);
 
+  async function handleDeleteInvocation(invId: string) {
+    if (!confirm("Delete this invocation? This will also remove its log file and statistics.")) {
+      return;
+    }
+    try {
+      await api.deleteInvocation(invId);
+      if (selectedJobId) {
+        await loadHistory(selectedJobId);
+      }
+      if (viewingLogId === invId) {
+        setLogContent(null);
+        setViewingLogId(null);
+      }
+    } catch (err) {
+      console.error("Failed to delete invocation:", err);
+    }
+  }
+
+  async function handleClearAllHistory() {
+    if (!selectedJobId) return;
+    if (
+      !confirm(
+        "Delete ALL invocations for this job? This will also remove log files and statistics."
+      )
+    ) {
+      return;
+    }
+    try {
+      await api.deleteInvocationsForJob(selectedJobId);
+      setInvocations([]);
+      setLogContent(null);
+      setViewingLogId(null);
+    } catch (err) {
+      console.error("Failed to clear history:", err);
+    }
+  }
+
+  async function handleViewLog(inv: BackupInvocation) {
+    if (!inv.log_file_path) return;
+    setLogError(null);
+    setViewingLogId(inv.id);
+    try {
+      const content = await api.readLogFile(inv.log_file_path);
+      setLogContent(content);
+    } catch (err) {
+      setLogContent(null);
+      setLogError(
+        err instanceof Error ? err.message : String(err)
+      );
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-48">
@@ -114,21 +170,34 @@ export function HistoryPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">History</h2>
-        <Select
-          value={selectedJobId ?? undefined}
-          onValueChange={setSelectedJobId}
-        >
-          <SelectTrigger className="w-64">
-            <SelectValue placeholder="Select a job" />
-          </SelectTrigger>
-          <SelectContent>
-            {jobs.map((job) => (
-              <SelectItem key={job.id} value={job.id}>
-                {job.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2">
+          {tab === "invocations" && invocations.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleClearAllHistory}
+              className="text-destructive"
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              Clear All
+            </Button>
+          )}
+          <Select
+            value={selectedJobId ?? undefined}
+            onValueChange={setSelectedJobId}
+          >
+            <SelectTrigger className="w-64">
+              <SelectValue placeholder="Select a job" />
+            </SelectTrigger>
+            <SelectContent>
+              {jobs.map((job) => (
+                <SelectItem key={job.id} value={job.id}>
+                  {job.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="flex gap-2">
@@ -148,6 +217,41 @@ export function HistoryPage() {
         </Button>
       </div>
 
+      {/* Log viewer */}
+      {(logContent !== null || logError !== null) && (
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium">Log Output</CardTitle>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  setLogContent(null);
+                  setLogError(null);
+                  setViewingLogId(null);
+                }}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {logError ? (
+              <p className="text-sm text-amber-600 dark:text-amber-400">
+                {logError}
+              </p>
+            ) : (
+              <ScrollArea className="h-64">
+                <pre className="text-xs font-mono whitespace-pre-wrap break-all">
+                  {logContent}
+                </pre>
+              </ScrollArea>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       <ScrollArea className="h-[calc(100vh-14rem)]">
         {tab === "invocations" && (
           <div className="space-y-3 pr-4">
@@ -163,7 +267,27 @@ export function HistoryPage() {
                       <CardTitle className="text-sm font-medium">
                         {formatDate(inv.started_at)}
                       </CardTitle>
-                      <div className="flex gap-2">
+                      <div className="flex items-center gap-2">
+                        {inv.log_file_path && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            title="View log"
+                            onClick={() => handleViewLog(inv)}
+                          >
+                            <FileText className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-destructive"
+                          title="Delete invocation"
+                          onClick={() => handleDeleteInvocation(inv.id)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
                         <Badge variant="outline" className="text-xs">
                           {inv.trigger}
                         </Badge>

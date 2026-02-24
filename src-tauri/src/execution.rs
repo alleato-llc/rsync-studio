@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::io::Write;
 use std::process::Child;
 use std::sync::{Arc, Mutex};
 
@@ -16,6 +17,7 @@ use rsync_core::services::command_builder::build_rsync_args;
 use rsync_core::services::job_runner::{run_job, ExecutionEvent};
 use rsync_core::services::job_service::JobService;
 use rsync_core::services::retention;
+use rsync_core::services::settings_service::SettingsService;
 use rsync_core::services::statistics_service::StatisticsService;
 
 pub struct RunningJobs {
@@ -181,6 +183,15 @@ pub fn run_job_internal(
         .as_ref()
         .and_then(|ctx| ctx.link_dest.as_deref());
 
+    // Read auto trailing slash setting
+    let auto_trailing_slash = {
+        let state: tauri::State<'_, crate::state::AppState> = app_handle.state();
+        state
+            .settings_service
+            .get_auto_trailing_slash()
+            .unwrap_or(true)
+    };
+
     // Build rsync args
     let args = build_rsync_args(
         &job.source,
@@ -188,11 +199,29 @@ pub fn run_job_internal(
         &job.options,
         job.ssh_config.as_ref(),
         link_dest,
+        auto_trailing_slash,
     );
 
     let invocation_id = Uuid::new_v4();
     let command_str = format!("rsync {}", args.join(" "));
     let snapshot_path_for_record = snapshot_ctx.as_ref().map(|ctx| ctx.snapshot_path.clone());
+
+    // Resolve log directory from settings, fallback to default
+    let log_file_path = {
+        let state: tauri::State<'_, crate::state::AppState> = app_handle.state();
+        let settings_service: &Arc<SettingsService> = &state.settings_service;
+        let log_dir = settings_service
+            .get_log_directory()
+            .ok()
+            .flatten()
+            .unwrap_or_else(|| state.default_log_dir.clone());
+
+        let dir = std::path::Path::new(&log_dir);
+        if let Err(e) = std::fs::create_dir_all(dir) {
+            log::error!("Failed to create log directory {}: {}", log_dir, e);
+        }
+        format!("{}/{}.log", log_dir, invocation_id)
+    };
 
     // Create invocation record
     let invocation = BackupInvocation {
@@ -208,7 +237,7 @@ pub fn run_job_internal(
         command_executed: command_str,
         exit_code: None,
         trigger: trigger.clone(),
-        log_file_path: None,
+        log_file_path: Some(log_file_path.clone()),
     };
 
     job_service
@@ -239,14 +268,21 @@ pub fn run_job_internal(
     let link_dest_for_record = snapshot_ctx
         .as_ref()
         .and_then(|ctx| ctx.link_dest.clone());
+    let invocation_started_at = invocation.started_at;
 
     // Drain events in a background thread
     let app = app_handle.clone();
+    let log_path_for_thread = log_file_path.clone();
     std::thread::spawn(move || {
         let mut last_bytes: u64 = 0;
         let mut last_files: u64 = 0;
         let mut last_total: u64 = 0;
         let mut last_speedup: Option<f64> = None;
+
+        // Open log file for writing
+        let mut log_writer = std::fs::File::create(&log_path_for_thread)
+            .map(std::io::BufWriter::new)
+            .ok();
 
         let speedup_re = Regex::new(r"speedup is ([\d.]+)").ok();
 
@@ -264,6 +300,11 @@ pub fn run_job_internal(
                         }
                     }
 
+                    // Write to log file
+                    if let Some(ref mut writer) = log_writer {
+                        let _ = writeln!(writer, "[{}] {}", Utc::now().format("%Y-%m-%d %H:%M:%S"), line);
+                    }
+
                     let _ = app.emit(
                         "job-log",
                         LogLine {
@@ -275,6 +316,11 @@ pub fn run_job_internal(
                     );
                 }
                 ExecutionEvent::StderrLine(line) => {
+                    // Write to log file
+                    if let Some(ref mut writer) = log_writer {
+                        let _ = writeln!(writer, "[{}] STDERR: {}", Utc::now().format("%Y-%m-%d %H:%M:%S"), line);
+                    }
+
                     let _ = app.emit(
                         "job-log",
                         LogLine {
@@ -295,6 +341,11 @@ pub fn run_job_internal(
                     // Handled below after loop
                 }
             }
+        }
+
+        // Flush and drop the log writer before completion
+        if let Some(mut writer) = log_writer.take() {
+            let _ = writer.flush();
         }
 
         // Receiver disconnected — reader threads are done.
@@ -330,7 +381,7 @@ pub fn run_job_internal(
         let completed_invocation = BackupInvocation {
             id: invocation_id,
             job_id: job_uuid,
-            started_at: Utc::now(), // Will be overwritten by the record
+            started_at: invocation_started_at,
             finished_at: Some(Utc::now()),
             status: status.clone(),
             bytes_transferred: last_bytes,
@@ -340,7 +391,7 @@ pub fn run_job_internal(
             command_executed: String::new(),
             exit_code,
             trigger,
-            log_file_path: None,
+            log_file_path: Some(log_path_for_thread),
         };
 
         let _ = job_service.complete_invocation(&completed_invocation);

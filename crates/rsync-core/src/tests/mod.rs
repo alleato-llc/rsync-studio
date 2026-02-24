@@ -15,6 +15,8 @@ mod sqlite_snapshot_repository_tests;
 #[cfg(test)]
 mod sqlite_statistics_repository_tests;
 #[cfg(test)]
+mod sqlite_settings_repository_tests;
+#[cfg(test)]
 mod job_service_integration_tests;
 #[cfg(test)]
 mod statistics_service_tests;

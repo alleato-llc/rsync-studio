@@ -596,7 +596,7 @@ mod tests {
             ..RsyncOptions::default()
         };
 
-        let args = build_rsync_args(&source, &dest, &opts, None, None);
+        let args = build_rsync_args(&source, &dest, &opts, None, None, false);
         let cmd = format!("rsync {}", args.join(" "));
 
         let parsed = parse_rsync_command(&cmd).unwrap();

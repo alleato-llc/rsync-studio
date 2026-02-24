@@ -13,6 +13,7 @@ use rsync_core::services::command_explainer::{self, CommandExplanation};
 use rsync_core::services::command_parser;
 use rsync_core::services::export_import;
 use rsync_core::services::preflight;
+use rsync_core::services::settings_service::RetentionSettings;
 
 use crate::execution::run_job_internal;
 use crate::state::AppState;
@@ -267,4 +268,154 @@ pub fn reset_statistics_for_job(
         .statistics_service
         .reset_for_job(&uuid)
         .map_err(|e| e.to_string())
+}
+
+// --- Settings commands ---
+
+#[tauri::command]
+pub fn get_setting(key: String, state: State<'_, AppState>) -> Result<Option<String>, String> {
+    state
+        .settings_service
+        .get_setting(&key)
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn set_setting(key: String, value: String, state: State<'_, AppState>) -> Result<(), String> {
+    state
+        .settings_service
+        .set_setting(&key, &value)
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn get_log_directory(state: State<'_, AppState>) -> Result<String, String> {
+    state
+        .settings_service
+        .get_log_directory()
+        .map(|opt| opt.unwrap_or_else(|| state.default_log_dir.clone()))
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn set_log_directory(path: String, state: State<'_, AppState>) -> Result<(), String> {
+    state
+        .settings_service
+        .set_log_directory(&path)
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn get_retention_settings(state: State<'_, AppState>) -> Result<RetentionSettings, String> {
+    state
+        .settings_service
+        .get_retention_settings()
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn set_retention_settings(
+    settings: RetentionSettings,
+    state: State<'_, AppState>,
+) -> Result<(), String> {
+    state
+        .settings_service
+        .set_retention_settings(&settings)
+        .map_err(|e| e.to_string())
+}
+
+// --- Trailing slash setting ---
+
+#[tauri::command]
+pub fn get_auto_trailing_slash(state: State<'_, AppState>) -> Result<bool, String> {
+    state
+        .settings_service
+        .get_auto_trailing_slash()
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn set_auto_trailing_slash(enabled: bool, state: State<'_, AppState>) -> Result<(), String> {
+    state
+        .settings_service
+        .set_auto_trailing_slash(enabled)
+        .map_err(|e| e.to_string())
+}
+
+// --- Delete history commands ---
+
+#[tauri::command]
+pub fn delete_invocation(
+    invocation_id: String,
+    state: State<'_, AppState>,
+) -> Result<(), String> {
+    let uuid = invocation_id
+        .parse::<Uuid>()
+        .map_err(|e| format!("Invalid invocation ID: {e}"))?;
+
+    // Fetch invocation to get log file path before deleting
+    let inv = state
+        .job_service
+        .get_invocation(&uuid)
+        .map_err(|e| e.to_string())?;
+
+    // Delete log file if it exists
+    if let Some(ref path) = inv.log_file_path {
+        if std::path::Path::new(path).exists() {
+            let _ = std::fs::remove_file(path);
+        }
+    }
+
+    state
+        .job_service
+        .delete_invocation(&uuid)
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn delete_invocations_for_job(
+    job_id: String,
+    state: State<'_, AppState>,
+) -> Result<(), String> {
+    let uuid = job_id
+        .parse::<Uuid>()
+        .map_err(|e| format!("Invalid job ID: {e}"))?;
+
+    // Fetch all invocations for the job to delete their log files
+    let invocations = state
+        .job_service
+        .get_job_history(&uuid, usize::MAX)
+        .map_err(|e| e.to_string())?;
+
+    for inv in &invocations {
+        if let Some(ref path) = inv.log_file_path {
+            if std::path::Path::new(path).exists() {
+                let _ = std::fs::remove_file(path);
+            }
+        }
+    }
+
+    state
+        .job_service
+        .delete_invocations_for_job(&uuid)
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn count_invocations(state: State<'_, AppState>) -> Result<usize, String> {
+    state
+        .job_service
+        .list_all_invocations()
+        .map(|inv| inv.len())
+        .map_err(|e| e.to_string())
+}
+
+// --- Log file commands ---
+
+#[tauri::command]
+pub fn read_log_file(path: String) -> Result<String, String> {
+    if !std::path::Path::new(&path).exists() {
+        return Err("Log file not found. It may have been deleted or moved.".to_string());
+    }
+    std::fs::read_to_string(&path).map_err(|e| format!("Failed to read log file: {e}"))
 }

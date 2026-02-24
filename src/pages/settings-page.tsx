@@ -1,6 +1,14 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
+import { FolderOpen, Sun, Moon, Monitor } from "lucide-react";
+import { open } from "@tauri-apps/plugin-dialog";
 import * as api from "@/lib/tauri";
+import { themes, type AppearanceMode } from "@/lib/themes";
+import { useTheme } from "@/hooks/use-theme";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import {
   Card,
   CardContent,
@@ -10,12 +18,45 @@ import {
 } from "@/components/ui/card";
 
 export function SettingsPage() {
+  const { theme, setTheme, appearance, setAppearance } = useTheme();
   const [status, setStatus] = useState<{
     type: "success" | "error";
     message: string;
   } | null>(null);
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Trailing slash state
+  const [autoTrailingSlash, setAutoTrailingSlashState] = useState(true);
+
+  // Log directory state
+  const [logDir, setLogDir] = useState("");
+  const [logDirStatus, setLogDirStatus] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
+
+  // Retention state
+  const [maxAgeDays, setMaxAgeDays] = useState(90);
+  const [maxPerJob, setMaxPerJob] = useState(15);
+  const [invocationCount, setInvocationCount] = useState(0);
+  const [retentionStatus, setRetentionStatus] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
+
+  useEffect(() => {
+    api.getAutoTrailingSlash().then(setAutoTrailingSlashState).catch(console.error);
+    api.getLogDirectory().then(setLogDir).catch(console.error);
+    api
+      .getRetentionSettings()
+      .then((s) => {
+        setMaxAgeDays(s.max_log_age_days);
+        setMaxPerJob(s.max_history_per_job);
+      })
+      .catch(console.error);
+    api.countInvocations().then(setInvocationCount).catch(console.error);
+  }, []);
 
   async function handleExport() {
     setLoading(true);
@@ -66,10 +107,44 @@ export function SettingsPage() {
       });
     } finally {
       setLoading(false);
-      // Reset file input so the same file can be re-imported
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
+    }
+  }
+
+  async function handleSaveLogDir() {
+    setLogDirStatus(null);
+    try {
+      await api.setLogDirectory(logDir);
+      setLogDirStatus({
+        type: "success",
+        message: "Log directory saved.",
+      });
+    } catch (err) {
+      setLogDirStatus({
+        type: "error",
+        message: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+
+  async function handleSaveRetention() {
+    setRetentionStatus(null);
+    try {
+      await api.setRetentionSettings({
+        max_log_age_days: maxAgeDays,
+        max_history_per_job: maxPerJob,
+      });
+      setRetentionStatus({
+        type: "success",
+        message: "Retention settings saved.",
+      });
+    } catch (err) {
+      setRetentionStatus({
+        type: "error",
+        message: err instanceof Error ? err.message : String(err),
+      });
     }
   }
 
@@ -82,6 +157,204 @@ export function SettingsPage() {
         </p>
       </div>
 
+      {/* Theme */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Theme</CardTitle>
+          <CardDescription>
+            Choose a color theme for the application.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-4 gap-2">
+            {themes.map((t) => (
+              <button
+                key={t.name}
+                onClick={() => setTheme(t.name)}
+                className={`flex items-center gap-2 rounded-md border p-2 text-sm transition-colors hover:bg-accent ${
+                  theme === t.name
+                    ? "border-primary ring-2 ring-primary ring-offset-2 ring-offset-background"
+                    : "border-border"
+                }`}
+              >
+                <span
+                  className="h-4 w-4 rounded-full shrink-0"
+                  style={{ backgroundColor: t.color }}
+                />
+                {t.label}
+              </button>
+            ))}
+          </div>
+          {/* Live preview */}
+          <Card className="max-w-sm">
+            <CardContent className="p-4 space-y-2">
+              <div className="flex items-center gap-2">
+                <Button size="sm">Primary</Button>
+                <Button size="sm" variant="secondary">
+                  Secondary
+                </Button>
+                <Badge>Badge</Badge>
+              </div>
+              <Input placeholder="Sample input..." className="max-w-xs" />
+            </CardContent>
+          </Card>
+        </CardContent>
+      </Card>
+
+      {/* Appearance */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Appearance</CardTitle>
+          <CardDescription>
+            Choose between light, dark, or system-matched appearance.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-3 gap-2">
+            {([
+              { mode: "light" as AppearanceMode, label: "Light", Icon: Sun },
+              { mode: "dark" as AppearanceMode, label: "Dark", Icon: Moon },
+              { mode: "system" as AppearanceMode, label: "System", Icon: Monitor },
+            ]).map(({ mode, label, Icon }) => (
+              <button
+                key={mode}
+                onClick={() => setAppearance(mode)}
+                className={`flex items-center justify-center gap-2 rounded-md border p-2 text-sm transition-colors hover:bg-accent ${
+                  appearance === mode
+                    ? "border-primary ring-2 ring-primary ring-offset-2 ring-offset-background"
+                    : "border-border"
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                {label}
+              </button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Trailing Slash */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Trailing Slash</CardTitle>
+          <CardDescription>
+            Automatically append a trailing slash to source and destination paths
+            when building rsync commands. A trailing slash tells rsync to sync
+            directory contents rather than copying the directory itself.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="auto-trailing-slash">Auto-append trailing slash</Label>
+            <Switch
+              id="auto-trailing-slash"
+              checked={autoTrailingSlash}
+              onCheckedChange={async (checked) => {
+                setAutoTrailingSlashState(checked);
+                await api.setAutoTrailingSlash(checked);
+              }}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Log Directory */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Log Directory</CardTitle>
+          <CardDescription>
+            Directory where job execution logs are stored.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex gap-2">
+            <Input
+              className="flex-1"
+              value={logDir}
+              onChange={(e) => setLogDir(e.target.value)}
+              placeholder="/path/to/logs"
+            />
+            <Button
+              variant="outline"
+              size="icon"
+              title="Browse for folder"
+              onClick={async () => {
+                const selected = await open({
+                  directory: true,
+                  multiple: false,
+                });
+                if (selected) {
+                  setLogDir(selected as string);
+                }
+              }}
+            >
+              <FolderOpen className="h-4 w-4" />
+            </Button>
+            <Button onClick={handleSaveLogDir}>Save</Button>
+          </div>
+          {logDirStatus && (
+            <p
+              className={`text-sm ${
+                logDirStatus.type === "success"
+                  ? "text-green-600 dark:text-green-400"
+                  : "text-destructive"
+              }`}
+            >
+              {logDirStatus.message}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Retention */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Retention</CardTitle>
+          <CardDescription>
+            Automatically prune old invocations and log files.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <Label className="text-sm">Max log age (days)</Label>
+              <Input
+                type="number"
+                min={1}
+                value={maxAgeDays}
+                onChange={(e) => setMaxAgeDays(parseInt(e.target.value) || 90)}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-sm">Max runs per job</Label>
+              <Input
+                type="number"
+                min={1}
+                value={maxPerJob}
+                onChange={(e) => setMaxPerJob(parseInt(e.target.value) || 15)}
+              />
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Currently saved: {invocationCount} invocation
+            {invocationCount !== 1 ? "s" : ""}
+          </p>
+          <Button onClick={handleSaveRetention}>Save</Button>
+          {retentionStatus && (
+            <p
+              className={`text-sm ${
+                retentionStatus.type === "success"
+                  ? "text-green-600 dark:text-green-400"
+                  : "text-destructive"
+              }`}
+            >
+              {retentionStatus.message}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Export & Import */}
       <Card>
         <CardHeader>
           <CardTitle>Export &amp; Import</CardTitle>

@@ -7,6 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { ArrowLeft, Square } from "lucide-react";
 import { ProgressDisplay } from "./progress-display";
 import { buildCommandString } from "@/lib/command-preview";
+import { useTrailingSlash } from "@/hooks/use-trailing-slash";
 
 interface ExecutionViewProps {
   job: JobDefinition;
@@ -43,6 +44,7 @@ export function ExecutionView({
   onBack,
 }: ExecutionViewProps) {
   const logEndRef = useRef<HTMLDivElement>(null);
+  const autoTrailingSlash = useTrailingSlash();
 
   useEffect(() => {
     logEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -76,7 +78,7 @@ export function ExecutionView({
       <div className="space-y-2">
         <h3 className="text-sm font-medium">Command</h3>
         <pre className="text-xs font-mono whitespace-pre-wrap bg-muted/50 rounded-md border p-3">
-          {buildCommandString(job)}
+          {buildCommandString(job, autoTrailingSlash)}
         </pre>
       </div>
 

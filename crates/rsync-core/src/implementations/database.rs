@@ -86,6 +86,17 @@ impl Database {
             .map_err(|e| AppError::DatabaseError(e.to_string()))?;
         }
 
+        if current_version < 3 {
+            let sql = include_str!("../migrations/v003_settings.sql");
+            conn.execute_batch(sql)
+                .map_err(|e| AppError::DatabaseError(e.to_string()))?;
+            conn.execute(
+                "INSERT INTO schema_version (version, applied_at) VALUES (3, datetime('now'))",
+                [],
+            )
+            .map_err(|e| AppError::DatabaseError(e.to_string()))?;
+        }
+
         Ok(())
     }
 }

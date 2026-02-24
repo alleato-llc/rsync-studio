@@ -7,11 +7,12 @@ import { Copy, Check } from "lucide-react";
 
 interface CommandPreviewProps {
   job: JobDefinition;
+  autoTrailingSlash?: boolean;
 }
 
-export function CommandPreview({ job }: CommandPreviewProps) {
+export function CommandPreview({ job, autoTrailingSlash = false }: CommandPreviewProps) {
   const [copied, setCopied] = useState(false);
-  const command = buildCommandString(job);
+  const command = buildCommandString(job, autoTrailingSlash);
 
   async function handleCopy() {
     await navigator.clipboard.writeText(command);

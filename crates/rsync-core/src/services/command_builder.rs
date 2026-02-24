@@ -1,11 +1,20 @@
 use crate::models::job::{RsyncOptions, SshConfig, StorageLocation};
 
+fn ensure_trailing_slash(path: &str) -> String {
+    if path.ends_with('/') {
+        path.to_string()
+    } else {
+        format!("{}/", path)
+    }
+}
+
 pub fn build_rsync_args(
     source: &StorageLocation,
     destination: &StorageLocation,
     options: &RsyncOptions,
     ssh_config: Option<&SshConfig>,
     link_dest: Option<&str>,
+    auto_trailing_slash: bool,
 ) -> Vec<String> {
     let mut args = Vec::new();
 
@@ -80,8 +89,16 @@ pub fn build_rsync_args(
         args.push(arg.clone());
     }
 
-    args.push(source.to_rsync_path());
-    args.push(destination.to_rsync_path());
+    let source_path = source.to_rsync_path();
+    let dest_path = destination.to_rsync_path();
+
+    if auto_trailing_slash {
+        args.push(ensure_trailing_slash(&source_path));
+        args.push(ensure_trailing_slash(&dest_path));
+    } else {
+        args.push(source_path);
+        args.push(dest_path);
+    }
 
     args
 }
@@ -111,6 +128,7 @@ mod tests {
             },
             None,
             None,
+            false,
         );
         assert!(args.contains(&"-a".to_string()));
     }
@@ -128,7 +146,7 @@ mod tests {
             human_readable: true,
             ..default_opts()
         };
-        let args = build_rsync_args(&local("/src/"), &local("/dst/"), &options, None, None);
+        let args = build_rsync_args(&local("/src/"), &local("/dst/"), &options, None, None, false);
 
         assert!(args.contains(&"-a".to_string()));
         assert!(args.contains(&"-z".to_string()));
@@ -154,6 +172,7 @@ mod tests {
             &default_opts(),
             Some(&ssh),
             None,
+            false,
         );
 
         assert!(args.contains(&"-e".to_string()));
@@ -173,6 +192,7 @@ mod tests {
             &default_opts(),
             None,
             None,
+            false,
         );
         assert!(args.contains(&"/home/user/docs/".to_string()));
         assert!(args.contains(&"/backup/docs/".to_string()));
@@ -187,7 +207,7 @@ mod tests {
             path: "/data/backup/".to_string(),
             identity_file: None,
         };
-        let args = build_rsync_args(&source, &local("/local/"), &default_opts(), None, None);
+        let args = build_rsync_args(&source, &local("/local/"), &default_opts(), None, None, false);
         assert!(args.contains(&"admin@server.example.com:/data/backup/".to_string()));
     }
 
@@ -198,7 +218,7 @@ mod tests {
             module: "backups".to_string(),
             path: "daily/".to_string(),
         };
-        let args = build_rsync_args(&local("/src/"), &dest, &default_opts(), None, None);
+        let args = build_rsync_args(&local("/src/"), &dest, &default_opts(), None, None, false);
         assert!(args.contains(&"rsync://rsync.example.com/backups/daily/".to_string()));
     }
 
@@ -208,7 +228,7 @@ mod tests {
             exclude_patterns: vec!["*.log".to_string(), "tmp/".to_string(), ".git".to_string()],
             ..default_opts()
         };
-        let args = build_rsync_args(&local("/src/"), &local("/dst/"), &options, None, None);
+        let args = build_rsync_args(&local("/src/"), &local("/dst/"), &options, None, None, false);
 
         assert!(args.contains(&"--exclude=*.log".to_string()));
         assert!(args.contains(&"--exclude=tmp/".to_string()));
@@ -223,6 +243,7 @@ mod tests {
             &default_opts(),
             None,
             Some("/prev/snapshot"),
+            false,
         );
         assert!(args.contains(&"--link-dest=/prev/snapshot".to_string()));
     }
@@ -233,7 +254,7 @@ mod tests {
             bandwidth_limit: Some(1000),
             ..default_opts()
         };
-        let args = build_rsync_args(&local("/src/"), &local("/dst/"), &options, None, None);
+        let args = build_rsync_args(&local("/src/"), &local("/dst/"), &options, None, None, false);
         assert!(args.contains(&"--bwlimit=1000".to_string()));
     }
 
@@ -243,12 +264,42 @@ mod tests {
             custom_args: vec!["--checksum".to_string(), "--info=progress2".to_string()],
             ..default_opts()
         };
-        let args = build_rsync_args(&local("/src/"), &local("/dst/"), &options, None, None);
+        let args = build_rsync_args(&local("/src/"), &local("/dst/"), &options, None, None, false);
 
         // Custom args should be before source/dest (which are last two)
         let checksum_pos = args.iter().position(|a| a == "--checksum").unwrap();
         let src_pos = args.iter().position(|a| a == "/src/").unwrap();
         assert!(checksum_pos < src_pos);
         assert!(args.contains(&"--info=progress2".to_string()));
+    }
+
+    #[test]
+    fn test_auto_trailing_slash_appends() {
+        let args = build_rsync_args(
+            &local("/home/user/docs"),
+            &local("/backup/docs"),
+            &default_opts(),
+            None,
+            None,
+            true,
+        );
+        assert!(args.contains(&"/home/user/docs/".to_string()));
+        assert!(args.contains(&"/backup/docs/".to_string()));
+    }
+
+    #[test]
+    fn test_auto_trailing_slash_no_double() {
+        let args = build_rsync_args(
+            &local("/home/user/docs/"),
+            &local("/backup/docs/"),
+            &default_opts(),
+            None,
+            None,
+            true,
+        );
+        assert!(args.contains(&"/home/user/docs/".to_string()));
+        assert!(args.contains(&"/backup/docs/".to_string()));
+        // Ensure no double slashes
+        assert!(!args.iter().any(|a| a.ends_with("//")));
     }
 }

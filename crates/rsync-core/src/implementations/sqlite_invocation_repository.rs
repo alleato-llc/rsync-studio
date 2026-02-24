@@ -87,6 +87,27 @@ impl InvocationRepository for SqliteInvocationRepository {
         Ok(invocations)
     }
 
+    fn list_all_invocations(&self) -> Result<Vec<BackupInvocation>, AppError> {
+        let conn = self.conn.lock().map_err(|e| AppError::DatabaseError(e.to_string()))?;
+        let mut stmt = conn
+            .prepare(
+                "SELECT id, job_id, started_at, finished_at, status, bytes_transferred, files_transferred, total_files, snapshot_path, command_executed, exit_code, trigger, log_file_path
+                 FROM invocations ORDER BY started_at DESC",
+            )
+            .map_err(|e| AppError::DatabaseError(e.to_string()))?;
+
+        let rows = stmt
+            .query_map([], |row| Ok(row_to_invocation(row)))
+            .map_err(|e| AppError::DatabaseError(e.to_string()))?;
+
+        let mut invocations = Vec::new();
+        for row in rows {
+            let inv = row.map_err(|e| AppError::DatabaseError(e.to_string()))??;
+            invocations.push(inv);
+        }
+        Ok(invocations)
+    }
+
     fn update_invocation(&self, inv: &BackupInvocation) -> Result<(), AppError> {
         let conn = self.conn.lock().map_err(|e| AppError::DatabaseError(e.to_string()))?;
         let rows = conn
@@ -113,6 +134,34 @@ impl InvocationRepository for SqliteInvocationRepository {
                 inv.id
             )));
         }
+        Ok(())
+    }
+
+    fn delete_invocation(&self, id: &Uuid) -> Result<(), AppError> {
+        let conn = self.conn.lock().map_err(|e| AppError::DatabaseError(e.to_string()))?;
+        let rows = conn
+            .execute(
+                "DELETE FROM invocations WHERE id = ?1",
+                rusqlite::params![id.to_string()],
+            )
+            .map_err(|e| AppError::DatabaseError(e.to_string()))?;
+
+        if rows == 0 {
+            return Err(AppError::NotFound(format!(
+                "Invocation {} not found",
+                id
+            )));
+        }
+        Ok(())
+    }
+
+    fn delete_invocations_for_job(&self, job_id: &Uuid) -> Result<(), AppError> {
+        let conn = self.conn.lock().map_err(|e| AppError::DatabaseError(e.to_string()))?;
+        conn.execute(
+            "DELETE FROM invocations WHERE job_id = ?1",
+            rusqlite::params![job_id.to_string()],
+        )
+        .map_err(|e| AppError::DatabaseError(e.to_string()))?;
         Ok(())
     }
 }

@@ -1,4 +1,5 @@
 import { useReducer, useState } from "react";
+import { useTrailingSlash } from "@/hooks/use-trailing-slash";
 import type { JobDefinition, StorageLocation, SshConfig } from "@/types/job";
 import type { ScheduleConfig } from "@/types/schedule";
 import { Button } from "@/components/ui/button";
@@ -97,6 +98,7 @@ export function JobForm({ initialJob, onSave, onCancel, title }: JobFormProps) {
   const [job, dispatch] = useReducer(jobReducer, initialJob);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const autoTrailingSlash = useTrailingSlash();
 
   async function handleSubmit() {
     const validationErrors = validate(job);
@@ -160,6 +162,7 @@ export function JobForm({ initialJob, onSave, onCancel, title }: JobFormProps) {
                     dispatch({ type: "SET_DESTINATION", destination })
                   }
                   errors={errors}
+                  autoTrailingSlash={autoTrailingSlash}
                 />
               </TabsContent>
 
@@ -197,7 +200,7 @@ export function JobForm({ initialJob, onSave, onCancel, title }: JobFormProps) {
 
         <div className="lg:col-span-1">
           <div className="sticky top-0">
-            <CommandPreview job={job} />
+            <CommandPreview job={job} autoTrailingSlash={autoTrailingSlash} />
           </div>
         </div>
       </div>

@@ -5,6 +5,10 @@ import type {
   SshConfig,
 } from "@/types/job";
 
+function ensureTrailingSlash(path: string): string {
+  return path.endsWith("/") ? path : `${path}/`;
+}
+
 function storageLocationToRsyncPath(loc: StorageLocation): string {
   switch (loc.type) {
     case "Local":
@@ -46,7 +50,8 @@ export function buildRsyncArgs(
   source: StorageLocation,
   destination: StorageLocation,
   options: RsyncOptions,
-  sshConfig: SshConfig | null
+  sshConfig: SshConfig | null,
+  autoTrailingSlash: boolean = false,
 ): string[] {
   const args: string[] = [];
 
@@ -79,18 +84,30 @@ export function buildRsyncArgs(
     args.push(arg);
   }
 
-  args.push(storageLocationToRsyncPath(source));
-  args.push(storageLocationToRsyncPath(destination));
+  const sourcePath = storageLocationToRsyncPath(source);
+  const destPath = storageLocationToRsyncPath(destination);
+
+  if (autoTrailingSlash) {
+    args.push(ensureTrailingSlash(sourcePath));
+    args.push(ensureTrailingSlash(destPath));
+  } else {
+    args.push(sourcePath);
+    args.push(destPath);
+  }
 
   return args;
 }
 
-export function buildCommandString(job: JobDefinition): string {
+export function buildCommandString(
+  job: JobDefinition,
+  autoTrailingSlash: boolean = false,
+): string {
   const args = buildRsyncArgs(
     job.source,
     job.destination,
     job.options,
-    job.ssh_config
+    job.ssh_config,
+    autoTrailingSlash,
   );
   return `rsync ${args.join(" ")}`;
 }
