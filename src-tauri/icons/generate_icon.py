@@ -22,65 +22,77 @@ PURPLE_DARK = (109, 40, 217, 255)  # #6D28D9
 GOLD = (245, 158, 11, 255)  # #F59E0B
 TRANSPARENT = (0, 0, 0, 0)
 
-# Arrow arc parameters
-ARROW_RADIUS = 355  # radius of arrow centerline
-ARROW_THICKNESS = 68  # stroke width of arcs
-ARROWHEAD_LENGTH = 120  # length of arrowhead triangle
-ARROWHEAD_HALF_WIDTH = 65  # half-width of arrowhead base
+# Arrow geometry
+ARROW_RADIUS = 330  # centerline radius of the arc body
+ARROW_THICKNESS = 68  # stroke width of the arc body
+ARROWHEAD_LENGTH = 110  # how far the tip extends past the arc endpoint
+ARROWHEAD_HALF_WIDTH = 62  # half-width of the arrowhead base (wider than arc)
 
-# Arc angular parameters (Pillow angles: 0=east, CW, degrees)
-# Gap centers at ~330° (1 o'clock) and ~150° (7 o'clock)
-ARC1_START_ANGLE = 165  # Arc 1 drawn CW from 165° to 315°
-ARC1_END_ANGLE = 315
-ARC2_START_ANGLE = 345  # Arc 2 drawn CW from 345° to 135°
-ARC2_END_ANGLE = 135
+# Arc angular spans (Pillow: 0=east, angles increase CW)
+# Each arc spans ~150° with ~30° gaps between them.
+ARC1_START = 165  # Arc 1: CW from 165° to 315°
+ARC1_END = 315
+ARC2_START = 345  # Arc 2: CW from 345° to 135°
+ARC2_END = 135
 
-# The arrowhead is at the START of the Pillow CW arc (= the CCW leading edge)
-ARROW1_TIP_ANGLE = 165  # degrees (Pillow convention)
-ARROW2_TIP_ANGLE = 345
+POLYGON_SEGMENTS = 200  # smoothness of arc edges
 
 
 def point_on_circle(cx, cy, r, angle_deg):
-    """Get point on circle at given Pillow angle (CW from east)."""
+    """Point on circle at Pillow angle (0=east, CW)."""
     rad = math.radians(angle_deg)
     return (cx + r * math.cos(rad), cy + r * math.sin(rad))
 
 
-def ccw_tangent(angle_deg):
-    """Unit tangent vector in the CCW direction at given Pillow angle."""
-    rad = math.radians(angle_deg)
-    # CCW = decreasing Pillow angle direction
-    # d/d(-θ) of (cos θ, sin θ) = (sin θ, -cos θ)
-    tx = math.sin(rad)
-    ty = -math.cos(rad)
-    return (tx, ty)
+def draw_curved_arrow(draw, cx, cy, r, thickness, start_deg, end_deg,
+                      head_length, head_half_width, color, segments=POLYGON_SEGMENTS):
+    """Draw a curved arrow as one filled polygon.
 
+    The arc body runs CW (Pillow convention) from start_deg to end_deg.
+    An arrowhead at start_deg points CCW (the visual direction of the arrow).
+    """
+    half_t = thickness / 2
+    inner_r = r - half_t
+    outer_r = r + half_t
 
-def draw_arrowhead(draw, cx, cy, r, angle_deg, length, half_width, color):
-    """Draw a triangular arrowhead at the given position pointing CCW."""
-    # Point on circle
-    px, py = point_on_circle(cx, cy, r, angle_deg)
+    # CW angular span of the arc body
+    span = end_deg - start_deg
+    if span <= 0:
+        span += 360
 
-    # CCW tangent direction
-    tx, ty = ccw_tangent(angle_deg)
+    # Arrowhead tip: on the centerline, past the arc start in the CCW direction
+    head_delta_deg = math.degrees(head_length / r)
+    tip_angle = start_deg - head_delta_deg
+    tip = point_on_circle(cx, cy, r, tip_angle)
 
-    # Normal (perpendicular to tangent, pointing outward/inward)
-    nx, ny = -ty, tx  # rotated 90° CW from tangent
+    # Wing vertices at the arc start angle
+    outer_wing = point_on_circle(cx, cy, r + head_half_width, start_deg)
+    inner_wing = point_on_circle(cx, cy, r - head_half_width, start_deg)
 
-    # Arrowhead tip: offset forward along tangent
-    tip_x = px + length * tx
-    tip_y = py + length * ty
+    # Build polygon vertices going around the perimeter
+    points = []
 
-    # Arrowhead base points: offset back to overlap with the arc end
-    base_cx = px - (length * 0.35) * tx
-    base_cy = py - (length * 0.35) * ty
+    # 1. Arrowhead tip
+    points.append(tip)
 
-    base1_x = base_cx + half_width * nx
-    base1_y = base_cy + half_width * ny
-    base2_x = base_cx - half_width * nx
-    base2_y = base_cy - half_width * ny
+    # 2. Outer wing
+    points.append(outer_wing)
 
-    draw.polygon([(tip_x, tip_y), (base1_x, base1_y), (base2_x, base2_y)], fill=color)
+    # 3. Outer arc edge (start → end, CW)
+    for i in range(segments + 1):
+        angle = start_deg + span * i / segments
+        points.append(point_on_circle(cx, cy, outer_r, angle))
+
+    # 4. Inner arc edge (end → start, CCW)
+    for i in range(segments, -1, -1):
+        angle = start_deg + span * i / segments
+        points.append(point_on_circle(cx, cy, inner_r, angle))
+
+    # 5. Inner wing
+    points.append(inner_wing)
+
+    # Polygon auto-closes back to tip
+    draw.polygon(points, fill=color)
 
 
 def main():
@@ -96,63 +108,23 @@ def main():
         [inner_margin, inner_margin, SIZE - 1 - inner_margin, SIZE - 1 - inner_margin],
         fill=PURPLE_DARK,
     )
-    # Slightly lighter inner fill
     inner_margin2 = 20
     draw.ellipse(
-        [
-            inner_margin2,
-            inner_margin2,
-            SIZE - 1 - inner_margin2,
-            SIZE - 1 - inner_margin2,
-        ],
+        [inner_margin2, inner_margin2, SIZE - 1 - inner_margin2, SIZE - 1 - inner_margin2],
         fill=PURPLE,
     )
 
-    # --- Counterclockwise arrow arcs (gold) ---
-    arc_bbox = [
-        CENTER - ARROW_RADIUS,
-        CENTER - ARROW_RADIUS,
-        CENTER + ARROW_RADIUS,
-        CENTER + ARROW_RADIUS,
-    ]
-
-    # Arc 1: CW from 165° to 315° in Pillow (visually covers top-left quadrants)
-    draw.arc(
-        arc_bbox, ARC1_START_ANGLE, ARC1_END_ANGLE, fill=GOLD, width=ARROW_THICKNESS
+    # --- Gold curved arrows (counterclockwise) ---
+    draw_curved_arrow(
+        draw, CENTER, CENTER, ARROW_RADIUS, ARROW_THICKNESS,
+        ARC1_START, ARC1_END, ARROWHEAD_LENGTH, ARROWHEAD_HALF_WIDTH, GOLD,
     )
-
-    # Arc 2: CW from 345° to 135° in Pillow (visually covers bottom-right quadrants)
-    draw.arc(
-        arc_bbox, ARC2_START_ANGLE, ARC2_END_ANGLE, fill=GOLD, width=ARROW_THICKNESS
-    )
-
-    # --- Arrowheads ---
-    # Arrow 1 tip at 165° (pointing CCW toward ~150° direction)
-    draw_arrowhead(
-        draw,
-        CENTER,
-        CENTER,
-        ARROW_RADIUS,
-        ARROW1_TIP_ANGLE,
-        ARROWHEAD_LENGTH,
-        ARROWHEAD_HALF_WIDTH,
-        GOLD,
-    )
-
-    # Arrow 2 tip at 345° (pointing CCW toward ~330° direction)
-    draw_arrowhead(
-        draw,
-        CENTER,
-        CENTER,
-        ARROW_RADIUS,
-        ARROW2_TIP_ANGLE,
-        ARROWHEAD_LENGTH,
-        ARROWHEAD_HALF_WIDTH,
-        GOLD,
+    draw_curved_arrow(
+        draw, CENTER, CENTER, ARROW_RADIUS, ARROW_THICKNESS,
+        ARC2_START, ARC2_END, ARROWHEAD_LENGTH, ARROWHEAD_HALF_WIDTH, GOLD,
     )
 
     # --- Central "R" letter ---
-    # Verdana Bold, fall back to Helvetica/Arial
     font_size = 380
     try:
         font = ImageFont.truetype(
@@ -166,10 +138,9 @@ def main():
         except Exception:
             font = ImageFont.truetype("/Library/Fonts/Arial.ttf", font_size)
 
-    # Draw text centered
     draw.text((CENTER, CENTER), "R", fill=GOLD, font=font, anchor="mm")
 
-    # Save at 1024x1024
+    # Save at 1024×1024
     output_path = "icon_1024.png"
     img.save(output_path, "PNG")
     print(f"Saved {output_path}")

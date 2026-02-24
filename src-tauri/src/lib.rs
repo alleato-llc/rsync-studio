@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use tauri::menu::{Menu, MenuItem};
+use tauri::menu::{Menu, MenuItem, PredefinedMenuItem, Submenu};
 use tauri::tray::TrayIconBuilder;
 use tauri::{Emitter, Manager, WindowEvent};
 
@@ -42,6 +42,60 @@ pub fn run() {
         )
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
+        .menu(|handle| {
+            let about = MenuItem::with_id(handle, "about", "About Rsync Studio", true, None::<&str>)?;
+            let app_submenu = Submenu::with_items(
+                handle,
+                "Rsync Studio",
+                true,
+                &[
+                    &about,
+                    &PredefinedMenuItem::separator(handle)?,
+                    &PredefinedMenuItem::services(handle, None::<&str>)?,
+                    &PredefinedMenuItem::separator(handle)?,
+                    &PredefinedMenuItem::hide(handle, None::<&str>)?,
+                    &PredefinedMenuItem::hide_others(handle, None::<&str>)?,
+                    &PredefinedMenuItem::show_all(handle, None::<&str>)?,
+                    &PredefinedMenuItem::separator(handle)?,
+                    &PredefinedMenuItem::quit(handle, None::<&str>)?,
+                ],
+            )?;
+            let edit_submenu = Submenu::with_items(
+                handle,
+                "Edit",
+                true,
+                &[
+                    &PredefinedMenuItem::undo(handle, None::<&str>)?,
+                    &PredefinedMenuItem::redo(handle, None::<&str>)?,
+                    &PredefinedMenuItem::separator(handle)?,
+                    &PredefinedMenuItem::cut(handle, None::<&str>)?,
+                    &PredefinedMenuItem::copy(handle, None::<&str>)?,
+                    &PredefinedMenuItem::paste(handle, None::<&str>)?,
+                    &PredefinedMenuItem::select_all(handle, None::<&str>)?,
+                ],
+            )?;
+            let window_submenu = Submenu::with_items(
+                handle,
+                "Window",
+                true,
+                &[
+                    &PredefinedMenuItem::minimize(handle, None::<&str>)?,
+                    &PredefinedMenuItem::maximize(handle, None::<&str>)?,
+                    &PredefinedMenuItem::separator(handle)?,
+                    &PredefinedMenuItem::close_window(handle, None::<&str>)?,
+                ],
+            )?;
+            Menu::with_items(handle, &[&app_submenu, &edit_submenu, &window_submenu])
+        })
+        .on_menu_event(|app, event| {
+            if event.id.as_ref() == "about" {
+                if let Some(win) = app.get_webview_window("main") {
+                    let _ = win.show();
+                    let _ = win.set_focus();
+                }
+                let _ = app.emit("navigate-to-about", ());
+            }
+        })
         .setup(|app| {
             let data_dir = app
                 .path()

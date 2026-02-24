@@ -5,13 +5,14 @@ import {
   BarChart3,
   Hammer,
   Settings,
+  Info,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
-export type NavPage = "jobs" | "history" | "statistics" | "tools" | "settings";
+export type NavPage = "jobs" | "history" | "statistics" | "tools" | "settings" | "about";
 
 interface SidebarProps {
   currentPage: NavPage;
@@ -77,6 +78,21 @@ export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
       </nav>
       <Separator />
       <div className="p-2 space-y-1">
+        <Button
+          variant={currentPage === "about" ? "secondary" : "ghost"}
+          className={`w-full ${collapsed ? "justify-center px-0" : "justify-start"}`}
+          onClick={() => onNavigate("about")}
+          title={collapsed ? "About" : undefined}
+        >
+          {collapsed ? (
+            <Info className="h-4 w-4" />
+          ) : (
+            <>
+              <Info className="h-4 w-4 mr-2 shrink-0" />
+              <span className="overflow-hidden whitespace-nowrap">About</span>
+            </>
+          )}
+        </Button>
         <Button
           variant={currentPage === "settings" ? "secondary" : "ghost"}
           className={`w-full ${collapsed ? "justify-center px-0" : "justify-start"}`}
