@@ -1,3 +1,5 @@
+pub mod real_file_system;
+
 use std::path::{Path, PathBuf};
 use thiserror::Error;
 

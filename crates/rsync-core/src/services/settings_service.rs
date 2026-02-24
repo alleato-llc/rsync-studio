@@ -3,7 +3,7 @@ use std::sync::Arc;
 use serde::{Deserialize, Serialize};
 
 use crate::error::AppError;
-use crate::traits::settings_repository::SettingsRepository;
+use crate::repository::settings::SettingsRepository;
 
 const KEY_LOG_DIRECTORY: &str = "log_directory";
 const KEY_MAX_LOG_AGE_DAYS: &str = "max_log_age_days";

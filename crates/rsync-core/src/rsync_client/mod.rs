@@ -1,3 +1,5 @@
+pub mod process_rsync_client;
+
 use thiserror::Error;
 
 #[derive(Debug, Clone, PartialEq)]

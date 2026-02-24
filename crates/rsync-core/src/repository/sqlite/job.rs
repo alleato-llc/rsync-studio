@@ -3,10 +3,10 @@ use std::sync::{Arc, Mutex};
 use rusqlite::Connection;
 use uuid::Uuid;
 
+use crate::database::sqlite::{from_json, parse_datetime, parse_uuid, to_json};
 use crate::error::AppError;
-use crate::implementations::database::{from_json, parse_datetime, parse_uuid, to_json};
 use crate::models::job::JobDefinition;
-use crate::traits::job_repository::JobRepository;
+use crate::repository::job::JobRepository;
 
 pub struct SqliteJobRepository {
     conn: Arc<Mutex<Connection>>,

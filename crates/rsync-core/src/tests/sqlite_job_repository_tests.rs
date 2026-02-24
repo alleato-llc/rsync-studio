@@ -1,7 +1,7 @@
-use crate::implementations::database::Database;
-use crate::implementations::sqlite_job_repository::SqliteJobRepository;
+use crate::database::sqlite::Database;
+use crate::repository::job::JobRepository;
+use crate::repository::sqlite::job::SqliteJobRepository;
 use crate::tests::test_helpers::create_test_job;
-use crate::traits::job_repository::JobRepository;
 use uuid::Uuid;
 
 fn setup() -> SqliteJobRepository {

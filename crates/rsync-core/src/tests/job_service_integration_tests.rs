@@ -3,10 +3,10 @@ use std::sync::Arc;
 use chrono::Utc;
 use uuid::Uuid;
 
-use crate::implementations::database::Database;
-use crate::implementations::sqlite_invocation_repository::SqliteInvocationRepository;
-use crate::implementations::sqlite_job_repository::SqliteJobRepository;
-use crate::implementations::sqlite_snapshot_repository::SqliteSnapshotRepository;
+use crate::database::sqlite::Database;
+use crate::repository::sqlite::invocation::SqliteInvocationRepository;
+use crate::repository::sqlite::job::SqliteJobRepository;
+use crate::repository::sqlite::snapshot::SqliteSnapshotRepository;
 use crate::models::backup::{
     BackupInvocation, InvocationStatus, InvocationTrigger, SnapshotRecord,
 };

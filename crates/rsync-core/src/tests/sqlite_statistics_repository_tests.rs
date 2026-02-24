@@ -1,16 +1,16 @@
 use chrono::Utc;
 use uuid::Uuid;
 
-use crate::implementations::database::Database;
-use crate::implementations::sqlite_invocation_repository::SqliteInvocationRepository;
-use crate::implementations::sqlite_job_repository::SqliteJobRepository;
-use crate::implementations::sqlite_statistics_repository::SqliteStatisticsRepository;
+use crate::database::sqlite::Database;
 use crate::models::backup::{BackupInvocation, InvocationStatus, InvocationTrigger};
 use crate::models::statistics::RunStatistic;
+use crate::repository::invocation::InvocationRepository;
+use crate::repository::job::JobRepository;
+use crate::repository::sqlite::invocation::SqliteInvocationRepository;
+use crate::repository::sqlite::job::SqliteJobRepository;
+use crate::repository::sqlite::statistics::SqliteStatisticsRepository;
+use crate::repository::statistics::StatisticsRepository;
 use crate::tests::test_helpers::create_test_job;
-use crate::traits::invocation_repository::InvocationRepository;
-use crate::traits::job_repository::JobRepository;
-use crate::traits::statistics_repository::StatisticsRepository;
 
 fn setup() -> (
     SqliteJobRepository,

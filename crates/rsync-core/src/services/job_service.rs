@@ -7,9 +7,9 @@ use crate::error::AppError;
 use crate::models::backup::{BackupInvocation, SnapshotRecord};
 use crate::models::job::{BackupMode, JobDefinition};
 use crate::services::retention;
-use crate::traits::invocation_repository::InvocationRepository;
-use crate::traits::job_repository::JobRepository;
-use crate::traits::snapshot_repository::SnapshotRepository;
+use crate::repository::invocation::InvocationRepository;
+use crate::repository::job::JobRepository;
+use crate::repository::snapshot::SnapshotRepository;
 
 pub struct JobService {
     jobs: Arc<dyn JobRepository>,

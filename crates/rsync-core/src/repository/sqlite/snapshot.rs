@@ -3,10 +3,10 @@ use std::sync::{Arc, Mutex};
 use rusqlite::Connection;
 use uuid::Uuid;
 
+use crate::database::sqlite::{parse_datetime, parse_uuid};
 use crate::error::AppError;
-use crate::implementations::database::{parse_datetime, parse_uuid};
 use crate::models::backup::SnapshotRecord;
-use crate::traits::snapshot_repository::SnapshotRepository;
+use crate::repository::snapshot::SnapshotRepository;
 
 pub struct SqliteSnapshotRepository {
     conn: Arc<Mutex<Connection>>,

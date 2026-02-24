@@ -6,7 +6,7 @@ use uuid::Uuid;
 
 use crate::error::AppError;
 use crate::services::progress_parser::parse_progress_line;
-use crate::traits::rsync_client::RsyncError;
+use crate::rsync_client::RsyncError;
 
 #[derive(Debug, Clone)]
 pub enum ExecutionEvent {

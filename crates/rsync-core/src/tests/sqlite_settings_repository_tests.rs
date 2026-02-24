@@ -1,6 +1,6 @@
-use crate::implementations::database::Database;
-use crate::implementations::sqlite_settings_repository::SqliteSettingsRepository;
-use crate::traits::settings_repository::SettingsRepository;
+use crate::database::sqlite::Database;
+use crate::repository::settings::SettingsRepository;
+use crate::repository::sqlite::settings::SqliteSettingsRepository;
 
 fn setup() -> SqliteSettingsRepository {
     let db = Database::in_memory().unwrap();

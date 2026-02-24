@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 
 use crate::tests::test_file_system::TestFileSystem;
-use crate::traits::file_system::FileSystem;
+use crate::file_system::FileSystem;
 
 #[test]
 fn test_create_and_read_file() {

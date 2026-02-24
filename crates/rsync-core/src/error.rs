@@ -1,8 +1,8 @@
 use serde::Serialize;
 use thiserror::Error;
 
-use crate::traits::file_system::FsError;
-use crate::traits::rsync_client::RsyncError;
+use crate::file_system::FsError;
+use crate::rsync_client::RsyncError;
 
 #[derive(Debug, Error)]
 pub enum AppError {

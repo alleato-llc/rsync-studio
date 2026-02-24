@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 use rusqlite::Connection;
 
 use crate::error::AppError;
-use crate::traits::settings_repository::SettingsRepository;
+use crate::repository::settings::SettingsRepository;
 
 pub struct SqliteSettingsRepository {
     conn: Arc<Mutex<Connection>>,

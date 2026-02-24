@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use rsync_core::implementations::database::Database;
+use rsync_core::database::sqlite::Database;
 use rsync_core::services::job_service::JobService;
 use rsync_core::services::settings_service::SettingsService;
 use rsync_core::services::statistics_service::StatisticsService;

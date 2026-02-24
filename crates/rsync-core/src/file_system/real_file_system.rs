@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use crate::traits::file_system::{FileSystem, FsError};
+use super::{FileSystem, FsError};
 
 pub struct RealFileSystem;
 

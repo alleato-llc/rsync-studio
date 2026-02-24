@@ -5,8 +5,8 @@ use serde::Serialize;
 use tauri::State;
 use uuid::Uuid;
 
-use rsync_core::implementations::process_rsync_client::ProcessRsyncClient;
-use rsync_core::implementations::real_file_system::RealFileSystem;
+use rsync_core::rsync_client::process_rsync_client::ProcessRsyncClient;
+use rsync_core::file_system::real_file_system::RealFileSystem;
 use rsync_core::models::backup::{BackupInvocation, InvocationTrigger, SnapshotRecord};
 use rsync_core::models::job::JobDefinition;
 use rsync_core::models::statistics::AggregatedStats;

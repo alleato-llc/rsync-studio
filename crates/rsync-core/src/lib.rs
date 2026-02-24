@@ -1,8 +1,10 @@
+pub mod database;
 pub mod error;
-pub mod implementations;
+pub mod file_system;
 pub mod models;
+pub mod repository;
+pub mod rsync_client;
 pub mod services;
-pub mod traits;
 
 #[cfg(test)]
 pub mod tests;

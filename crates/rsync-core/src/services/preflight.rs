@@ -2,8 +2,8 @@ use std::path::Path;
 
 use crate::models::job::{JobDefinition, StorageLocation};
 use crate::models::validation::{CheckSeverity, CheckType, PreflightResult, ValidationCheck};
-use crate::traits::file_system::FileSystem;
-use crate::traits::rsync_client::RsyncClient;
+use crate::file_system::FileSystem;
+use crate::rsync_client::RsyncClient;
 
 /// Run preflight validation checks for a job.
 ///
@@ -245,8 +245,8 @@ fn format_bytes(bytes: u64) -> String {
 mod tests {
     use super::*;
     use crate::models::job::*;
-    use crate::traits::file_system::FsError;
-    use crate::traits::rsync_client::{RsyncError, RsyncResult};
+    use crate::file_system::FsError;
+    use crate::rsync_client::{RsyncError, RsyncResult};
     use std::path::{Path, PathBuf};
     use uuid::Uuid;
 

@@ -7,12 +7,12 @@ use tauri::{Emitter, Manager, WindowEvent};
 
 use chrono::Utc;
 
-use rsync_core::implementations::database::Database;
-use rsync_core::implementations::sqlite_invocation_repository::SqliteInvocationRepository;
-use rsync_core::implementations::sqlite_job_repository::SqliteJobRepository;
-use rsync_core::implementations::sqlite_settings_repository::SqliteSettingsRepository;
-use rsync_core::implementations::sqlite_snapshot_repository::SqliteSnapshotRepository;
-use rsync_core::implementations::sqlite_statistics_repository::SqliteStatisticsRepository;
+use rsync_core::database::sqlite::Database;
+use rsync_core::repository::sqlite::invocation::SqliteInvocationRepository;
+use rsync_core::repository::sqlite::job::SqliteJobRepository;
+use rsync_core::repository::sqlite::settings::SqliteSettingsRepository;
+use rsync_core::repository::sqlite::snapshot::SqliteSnapshotRepository;
+use rsync_core::repository::sqlite::statistics::SqliteStatisticsRepository;
 use rsync_core::models::backup::InvocationTrigger;
 use rsync_core::services::history_retention;
 use rsync_core::services::job_service::JobService;

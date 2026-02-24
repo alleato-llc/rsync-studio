@@ -2,7 +2,7 @@ use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 
-use crate::traits::file_system::{FileSystem, FsError};
+use crate::file_system::{FileSystem, FsError};
 
 #[derive(Debug, Clone)]
 enum FsNode {

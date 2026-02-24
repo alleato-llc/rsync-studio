@@ -1,7 +1,7 @@
 use std::io::{BufRead, BufReader};
 use std::process::{Command, Stdio};
 
-use crate::traits::rsync_client::{RsyncClient, RsyncError, RsyncResult};
+use super::{RsyncClient, RsyncError, RsyncResult};
 
 pub struct ProcessRsyncClient {
     rsync_binary: String,

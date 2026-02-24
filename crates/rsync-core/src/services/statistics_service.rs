@@ -6,7 +6,7 @@ use uuid::Uuid;
 use crate::error::AppError;
 use crate::models::backup::BackupInvocation;
 use crate::models::statistics::{AggregatedStats, RunStatistic};
-use crate::traits::statistics_repository::StatisticsRepository;
+use crate::repository::statistics::StatisticsRepository;
 
 pub struct StatisticsService {
     stats: Arc<dyn StatisticsRepository>,

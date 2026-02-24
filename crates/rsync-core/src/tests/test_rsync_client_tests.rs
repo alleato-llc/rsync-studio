@@ -6,8 +6,8 @@ use crate::services::command_builder;
 use crate::tests::test_file_system::TestFileSystem;
 use crate::tests::test_helpers::setup_test_env;
 use crate::tests::test_rsync_client::TestRsyncClient;
-use crate::traits::file_system::FileSystem;
-use crate::traits::rsync_client::{RsyncClient, RsyncError};
+use crate::file_system::FileSystem;
+use crate::rsync_client::{RsyncClient, RsyncError};
 
 #[test]
 fn test_basic_sync_copies_files() {
