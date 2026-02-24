@@ -40,7 +40,7 @@ export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
     <aside
       className={`${
         collapsed ? "w-14" : "w-56"
-      } border-r bg-muted/40 flex flex-col h-screen transition-all duration-200 overflow-hidden`}
+      } border-r bg-muted/40 flex flex-col h-screen sticky top-0 transition-all duration-200 overflow-hidden`}
     >
       <div className="p-4 overflow-hidden whitespace-nowrap">
         {collapsed ? (

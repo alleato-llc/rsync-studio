@@ -12,9 +12,9 @@ function App() {
   useTheme();
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex h-screen overflow-hidden">
       <Sidebar currentPage={currentPage} onNavigate={setCurrentPage} />
-      <main className="flex-1 p-8">
+      <main className="flex-1 overflow-y-auto p-8">
         {currentPage === "jobs" && <JobsPage />}
         {currentPage === "history" && <HistoryPage />}
         {currentPage === "statistics" && <StatisticsPage />}
