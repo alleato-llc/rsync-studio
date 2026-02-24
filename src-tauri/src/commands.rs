@@ -1,5 +1,7 @@
+use std::io::{BufRead, BufReader};
 use std::sync::Arc;
 
+use serde::Serialize;
 use tauri::State;
 use uuid::Uuid;
 
@@ -418,4 +420,52 @@ pub fn read_log_file(path: String) -> Result<String, String> {
         return Err("Log file not found. It may have been deleted or moved.".to_string());
     }
     std::fs::read_to_string(&path).map_err(|e| format!("Failed to read log file: {e}"))
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct LogFileLine {
+    pub text: String,
+    pub is_stderr: bool,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct LogFileChunk {
+    pub lines: Vec<LogFileLine>,
+    pub total_lines: usize,
+}
+
+#[tauri::command]
+pub fn read_log_file_lines(path: String, offset: usize, limit: usize) -> Result<LogFileChunk, String> {
+    let file_path = std::path::Path::new(&path);
+    if !file_path.exists() {
+        return Err("Log file not found. It may have been deleted or moved.".to_string());
+    }
+
+    let file = std::fs::File::open(file_path)
+        .map_err(|e| format!("Failed to open log file: {e}"))?;
+    let reader = BufReader::new(file);
+
+    let all_lines: Vec<String> = reader
+        .lines()
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| format!("Failed to read log file: {e}"))?;
+
+    let total_lines = all_lines.len();
+
+    let lines: Vec<LogFileLine> = all_lines
+        .into_iter()
+        .skip(offset)
+        .take(limit)
+        .map(|raw| {
+            let is_stderr = raw.contains("[STDERR]");
+            let text = raw
+                .splitn(2, "] ")
+                .nth(1)
+                .unwrap_or(&raw)
+                .to_string();
+            LogFileLine { text, is_stderr }
+        })
+        .collect();
+
+    Ok(LogFileChunk { lines, total_lines })
 }

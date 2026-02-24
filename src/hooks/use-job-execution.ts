@@ -4,6 +4,8 @@ import type { ProgressUpdate, LogLine, JobStatusEvent } from "@/types/progress";
 import type { JobStatus } from "@/types/job";
 import { executeJob as invokeExecute, executeDryRun as invokeDryRun, cancelJob as invokeCancel, getRunningJobs } from "@/lib/tauri";
 
+const MAX_LOG_LINES = 10_000;
+
 interface JobExecutionState {
   status: JobStatus;
   invocationId: string | null;
@@ -51,9 +53,12 @@ export function useJobExecution() {
           );
           if (match) {
             const [jobId, state] = match;
+            const newLogs = [...state.logs, log];
             next.set(jobId, {
               ...state,
-              logs: [...state.logs, log],
+              logs: newLogs.length > MAX_LOG_LINES
+                ? newLogs.slice(newLogs.length - MAX_LOG_LINES)
+                : newLogs,
             });
           }
           return next;

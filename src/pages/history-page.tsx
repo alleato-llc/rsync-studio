@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { HistoricalLogViewer } from "@/components/logs/historical-log-viewer";
 
 function statusVariant(
   status: string
@@ -66,8 +67,7 @@ export function HistoryPage() {
   const [snapshots, setSnapshots] = useState<SnapshotRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"invocations" | "snapshots">("invocations");
-  const [logContent, setLogContent] = useState<string | null>(null);
-  const [logError, setLogError] = useState<string | null>(null);
+  const [logFilePath, setLogFilePath] = useState<string | null>(null);
   const [viewingLogId, setViewingLogId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -105,7 +105,7 @@ export function HistoryPage() {
         await loadHistory(selectedJobId);
       }
       if (viewingLogId === invId) {
-        setLogContent(null);
+        setLogFilePath(null);
         setViewingLogId(null);
       }
     } catch (err) {
@@ -125,26 +125,17 @@ export function HistoryPage() {
     try {
       await api.deleteInvocationsForJob(selectedJobId);
       setInvocations([]);
-      setLogContent(null);
+      setLogFilePath(null);
       setViewingLogId(null);
     } catch (err) {
       console.error("Failed to clear history:", err);
     }
   }
 
-  async function handleViewLog(inv: BackupInvocation) {
+  function handleViewLog(inv: BackupInvocation) {
     if (!inv.log_file_path) return;
-    setLogError(null);
     setViewingLogId(inv.id);
-    try {
-      const content = await api.readLogFile(inv.log_file_path);
-      setLogContent(content);
-    } catch (err) {
-      setLogContent(null);
-      setLogError(
-        err instanceof Error ? err.message : String(err)
-      );
-    }
+    setLogFilePath(inv.log_file_path);
   }
 
   if (loading) {
@@ -218,7 +209,7 @@ export function HistoryPage() {
       </div>
 
       {/* Log viewer */}
-      {(logContent !== null || logError !== null) && (
+      {logFilePath !== null && (
         <Card>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
@@ -227,8 +218,7 @@ export function HistoryPage() {
                 variant="ghost"
                 size="icon"
                 onClick={() => {
-                  setLogContent(null);
-                  setLogError(null);
+                  setLogFilePath(null);
                   setViewingLogId(null);
                 }}
               >
@@ -237,17 +227,7 @@ export function HistoryPage() {
             </div>
           </CardHeader>
           <CardContent>
-            {logError ? (
-              <p className="text-sm text-amber-600 dark:text-amber-400">
-                {logError}
-              </p>
-            ) : (
-              <ScrollArea className="h-64">
-                <pre className="text-xs font-mono whitespace-pre-wrap break-all">
-                  {logContent}
-                </pre>
-              </ScrollArea>
-            )}
+            <HistoricalLogViewer filePath={logFilePath} height={256} />
           </CardContent>
         </Card>
       )}

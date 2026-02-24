@@ -140,6 +140,7 @@ pub fn run() {
             commands::delete_invocations_for_job,
             commands::count_invocations,
             commands::read_log_file,
+            commands::read_log_file_lines,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

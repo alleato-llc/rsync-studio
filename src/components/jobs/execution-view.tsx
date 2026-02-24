@@ -1,11 +1,10 @@
-import { useEffect, useRef } from "react";
 import type { JobDefinition, JobStatus } from "@/types/job";
 import type { ProgressUpdate, LogLine } from "@/types/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { ArrowLeft, Square } from "lucide-react";
 import { ProgressDisplay } from "./progress-display";
+import { VirtualLogViewer } from "@/components/logs/virtual-log-viewer";
 import { buildCommandString } from "@/lib/command-preview";
 import { useTrailingSlash } from "@/hooks/use-trailing-slash";
 
@@ -43,12 +42,7 @@ export function ExecutionView({
   onCancel,
   onBack,
 }: ExecutionViewProps) {
-  const logEndRef = useRef<HTMLDivElement>(null);
   const autoTrailingSlash = useTrailingSlash();
-
-  useEffect(() => {
-    logEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [logs.length]);
 
   return (
     <div className="space-y-6">
@@ -92,16 +86,7 @@ export function ExecutionView({
 
       <div className="space-y-2">
         <h3 className="text-sm font-medium">Output</h3>
-        <ScrollArea className="h-[400px] rounded-md border bg-muted/50 p-4">
-          <pre className="text-xs font-mono whitespace-pre-wrap">
-            {logs.map((log, i) => (
-              <div key={i} className={log.is_stderr ? "text-destructive" : ""}>
-                {log.line}
-              </div>
-            ))}
-            <div ref={logEndRef} />
-          </pre>
-        </ScrollArea>
+        <VirtualLogViewer logs={logs} height={400} autoScroll={status === "Running"} />
       </div>
 
       {status !== "Running" && status !== "Idle" && (

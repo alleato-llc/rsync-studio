@@ -4,6 +4,7 @@ import type { BackupInvocation, SnapshotRecord } from "@/types/backup";
 import type { CommandExplanation } from "@/types/command";
 import type { AggregatedStats } from "@/types/statistics";
 import type { PreflightResult } from "@/types/validation";
+import type { LogFileChunk } from "@/types/log-file";
 
 export async function listJobs(): Promise<JobDefinition[]> {
   return invoke<JobDefinition[]>("list_jobs");
@@ -163,4 +164,12 @@ export async function countInvocations(): Promise<number> {
 
 export async function readLogFile(path: string): Promise<string> {
   return invoke<string>("read_log_file", { path });
+}
+
+export async function readLogFileLines(
+  path: string,
+  offset: number,
+  limit: number
+): Promise<LogFileChunk> {
+  return invoke<LogFileChunk>("read_log_file_lines", { path, offset, limit });
 }
