@@ -1,6 +1,6 @@
 # Contributing
 
-Thank you for your interest in contributing to Rsync Desktop! This guide covers how to get started, the development workflow, and conventions to follow.
+Thank you for your interest in contributing to Rsync Studio! This guide covers how to get started, the development workflow, and conventions to follow.
 
 ## Getting Started
 

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Rsync Desktop follows a layered architecture with clear separation between domain logic, persistence, and presentation. The Cargo workspace contains three crates, and the frontend is a React SPA that communicates with the Rust backend via Tauri's IPC mechanism.
+Rsync Studio follows a layered architecture with clear separation between domain logic, persistence, and presentation. The Cargo workspace contains three crates, and the frontend is a React SPA that communicates with the Rust backend via Tauri's IPC mechanism.
 
 ```
 ┌──────────────────────────────────────────────────────┐
@@ -148,4 +148,4 @@ User Action → React Component → useJobs hook → tauri.ts invoke wrapper
 
 ## Database
 
-SQLite via `rusqlite` with bundled SQLite. Database file location: `{app_data_dir}/rsync-desktop.db`. Tables are created on first launch. Foreign key cascades handle cleanup (deleting a job removes its invocations and snapshots).
+SQLite via `rusqlite` with bundled SQLite. Database file location: `{app_data_dir}/rsync-studio.db`. Tables are created on first launch. Foreign key cascades handle cleanup (deleting a job removes its invocations and snapshots).

@@ -42,10 +42,9 @@ pub fn run() {
                 .expect("failed to resolve app data dir");
             std::fs::create_dir_all(&data_dir)?;
 
-            let db_path = data_dir.join("rsync-desktop.db");
-            let database =
-                Database::open(db_path.to_str().expect("invalid db path"))
-                    .expect("failed to open database");
+            let db_path = data_dir.join("rsync-studio.db");
+            let database = Database::open(db_path.to_str().expect("invalid db path"))
+                .expect("failed to open database");
 
             let conn = database.conn();
             let jobs = Arc::new(SqliteJobRepository::new(conn.clone()));
@@ -68,7 +67,8 @@ pub fn run() {
 
             // --- Close-to-tray behavior ---
             let app_handle = app.handle().clone();
-            let main_window = app.get_webview_window("main")
+            let main_window = app
+                .get_webview_window("main")
                 .expect("main window not found");
             main_window.on_window_event(move |event| {
                 if let WindowEvent::CloseRequested { api, .. } = event {
@@ -121,7 +121,7 @@ fn setup_tray(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     let _tray = TrayIconBuilder::new()
         .icon(app.default_window_icon().cloned().expect("no app icon"))
         .icon_as_template(false) // full-color icon in menu bar
-        .tooltip("Rsync Desktop")
+        .tooltip("Rsync Studio")
         .menu(&menu)
         .on_menu_event(|app, event| match event.id.as_ref() {
             "show" => {
@@ -199,7 +199,11 @@ fn spawn_scheduler(app_handle: tauri::AppHandle) {
                     .and_then(|h| h.first().map(|inv| inv.started_at));
 
                 if scheduler::is_job_due(schedule, last_run, now) {
-                    log::info!("Scheduler: job '{}' ({}) is due, executing", job.name, job.id);
+                    log::info!(
+                        "Scheduler: job '{}' ({}) is due, executing",
+                        job.name,
+                        job.id
+                    );
                     let _ = app_handle.emit("job-scheduled", &job.id.to_string());
 
                     if let Err(e) = execution::run_job_internal(

@@ -1,6 +1,6 @@
 # App Icon
 
-The Rsync Desktop icon is a purple circle with gold counterclockwise arrows and a bold "R" in the center (Verdana Bold).
+The Rsync Studio icon is a purple circle with gold counterclockwise arrows and a bold "R" in the center (Verdana Bold).
 
 ## Design
 

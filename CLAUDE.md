@@ -1,15 +1,15 @@
 # CLAUDE.md
 
-This file provides guidance for Claude Code when working on the Rsync Desktop project.
+This file provides guidance for Claude Code when working on the Rsync Studio project.
 
 ## Project Overview
 
-Rsync Desktop is a cross-platform (macOS + Linux) desktop GUI for rsync, built with Tauri v2 (Rust backend) + React + TypeScript + shadcn/ui + Tailwind CSS. A future TUI frontend is planned.
+Rsync Studio is a cross-platform (macOS + Linux) desktop GUI for rsync, built with Tauri v2 (Rust backend) + React + TypeScript + shadcn/ui + Tailwind CSS. A future TUI frontend is planned.
 
 ## Workspace Structure
 
 ```
-rsync-desktop/
+rsync-studio/
 ├── Cargo.toml              # Workspace root (resolver = "2")
 ├── crates/
 │   ├── rsync-core/         # Shared library: all domain logic, models, traits, services, tests

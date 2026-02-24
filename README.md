@@ -1,4 +1,4 @@
-# Rsync Desktop
+# Rsync Studio
 
 A cross-platform desktop application for managing rsync backup jobs. Built with Tauri v2, React, and TypeScript.
 
@@ -20,7 +20,6 @@ A cross-platform desktop application for managing rsync backup jobs. Built with 
 
 ### Prerequisites
 
-- [rsync](https://rsync.samba.org/) installed and available on your `PATH`
 - [Rust](https://rustup.rs) (stable)
 - [Node.js](https://nodejs.org) (18+)
 - Platform-specific Tauri v2 dependencies (see [setup guide](docs/setup.md))
@@ -39,7 +38,7 @@ See [docs/setup.md](docs/setup.md) for detailed setup instructions.
 
 ## Architecture
 
-Rsync Desktop is a Cargo workspace with three crates:
+Rsync Studio is a Cargo workspace with three crates:
 
 | Crate | Role |
 |-------|------|

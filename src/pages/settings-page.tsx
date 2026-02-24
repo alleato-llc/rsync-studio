@@ -26,7 +26,7 @@ export function SettingsPage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `rsync-desktop-jobs-${new Date().toISOString().slice(0, 10)}.json`;
+      a.download = `rsync-studio-jobs-${new Date().toISOString().slice(0, 10)}.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -95,7 +95,11 @@ export function SettingsPage() {
             <Button onClick={handleExport} disabled={loading}>
               Export All Jobs
             </Button>
-            <Button variant="outline" onClick={handleImportClick} disabled={loading}>
+            <Button
+              variant="outline"
+              onClick={handleImportClick}
+              disabled={loading}
+            >
               Import Jobs
             </Button>
             <input

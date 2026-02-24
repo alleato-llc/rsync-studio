@@ -24,7 +24,7 @@ For the full list of platform requirements, see the [Tauri v2 prerequisites](htt
 ```bash
 # Clone the repository
 git clone <repository-url>
-cd rsync-desktop
+cd rsync-studio
 
 # Install frontend dependencies
 npm install
@@ -64,7 +64,7 @@ Produces platform-specific installers in `src-tauri/target/release/bundle/`.
 ## Project Structure Quick Reference
 
 ```
-rsync-desktop/
+rsync-studio/
 ├── crates/rsync-core/     # Shared Rust library (all domain logic)
 ├── crates/rsync-tui/      # Future TUI (stub)
 ├── src-tauri/             # Tauri GUI shell (thin wrapper over rsync-core)

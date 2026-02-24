@@ -12,7 +12,7 @@ export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
   return (
     <aside className="w-56 border-r bg-muted/40 flex flex-col h-screen">
       <div className="p-4">
-        <h1 className="text-lg font-semibold">Rsync Desktop</h1>
+        <h1 className="text-lg font-semibold">Rsync Studio</h1>
         <p className="text-xs text-muted-foreground">Backup management</p>
       </div>
       <Separator />

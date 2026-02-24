@@ -1,7 +1,7 @@
 {
-  "productName": "Rsync Desktop",
+  "productName": "Rsync Studio",
   "version": "0.1.0",
-  "identifier": "com.rsync-desktop.app",
+  "identifier": "com.rsync-studio.app",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
