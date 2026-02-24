@@ -11,6 +11,7 @@ export interface BackupInvocation {
   command_executed: string;
   exit_code: number | null;
   trigger: InvocationTrigger;
+  log_file_path: string | null;
 }
 
 export type InvocationStatus = "Running" | "Succeeded" | "Failed" | "Cancelled";

@@ -1,0 +1,421 @@
+use std::collections::HashMap;
+use std::process::Child;
+use std::sync::{Arc, Mutex};
+
+use chrono::Utc;
+use tauri::{Emitter, Manager};
+use uuid::Uuid;
+
+use rsync_core::models::backup::{
+    BackupInvocation, InvocationStatus, InvocationTrigger, SnapshotRecord,
+};
+use rsync_core::models::job::{BackupMode, JobDefinition, JobStatus, StorageLocation};
+use rsync_core::models::progress::{JobStatusEvent, LogLine};
+use regex::Regex;
+use rsync_core::services::command_builder::build_rsync_args;
+use rsync_core::services::job_runner::{run_job, ExecutionEvent};
+use rsync_core::services::job_service::JobService;
+use rsync_core::services::retention;
+use rsync_core::services::statistics_service::StatisticsService;
+
+pub struct RunningJobs {
+    children: Mutex<HashMap<Uuid, Arc<Mutex<Child>>>>,
+}
+
+impl RunningJobs {
+    pub fn new() -> Self {
+        Self {
+            children: Mutex::new(HashMap::new()),
+        }
+    }
+
+    pub fn insert(&self, job_id: Uuid, child: Child) -> Arc<Mutex<Child>> {
+        let arc = Arc::new(Mutex::new(child));
+        self.children
+            .lock()
+            .expect("lock poisoned")
+            .insert(job_id, arc.clone());
+        arc
+    }
+
+    pub fn is_running(&self, job_id: &Uuid) -> bool {
+        self.children
+            .lock()
+            .expect("lock poisoned")
+            .contains_key(job_id)
+    }
+
+    pub fn cancel(&self, job_id: &Uuid) -> bool {
+        if let Some(child_arc) = self
+            .children
+            .lock()
+            .expect("lock poisoned")
+            .get(job_id)
+            .cloned()
+        {
+            if let Ok(mut child) = child_arc.lock() {
+                let _ = child.kill();
+            }
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn remove(&self, job_id: &Uuid) -> Option<Arc<Mutex<Child>>> {
+        self.children
+            .lock()
+            .expect("lock poisoned")
+            .remove(job_id)
+    }
+
+    pub fn running_job_ids(&self) -> Vec<Uuid> {
+        self.children
+            .lock()
+            .expect("lock poisoned")
+            .keys()
+            .copied()
+            .collect()
+    }
+}
+
+/// For snapshot-mode jobs, compute the destination subdir and link-dest path.
+struct SnapshotContext {
+    /// The full snapshot destination path (e.g., /backups/2025-06-15_140000)
+    snapshot_path: String,
+    /// The destination StorageLocation overridden with the snapshot subdir
+    effective_destination: StorageLocation,
+    /// Path to the previous snapshot for --link-dest, if any
+    link_dest: Option<String>,
+}
+
+fn prepare_snapshot_context(
+    job: &JobDefinition,
+    job_service: &JobService,
+) -> Result<Option<SnapshotContext>, String> {
+    match &job.backup_mode {
+        BackupMode::Snapshot { .. } => {}
+        _ => return Ok(None),
+    }
+
+    let now = Utc::now();
+    let dir_name = retention::snapshot_dir_name(now);
+
+    // Build snapshot path under the job's destination
+    let base_path = match &job.destination {
+        StorageLocation::Local { path } => path.clone(),
+        StorageLocation::RemoteSsh { path, .. } => path.clone(),
+        StorageLocation::RemoteRsync { path, .. } => path.clone(),
+    };
+
+    let base = base_path.trim_end_matches('/');
+    let snapshot_path = format!("{}/{}", base, dir_name);
+
+    // Override destination with snapshot subdir
+    let effective_destination = match &job.destination {
+        StorageLocation::Local { .. } => StorageLocation::Local {
+            path: format!("{}/", snapshot_path),
+        },
+        StorageLocation::RemoteSsh {
+            user,
+            host,
+            port,
+            identity_file,
+            ..
+        } => StorageLocation::RemoteSsh {
+            user: user.clone(),
+            host: host.clone(),
+            port: *port,
+            path: format!("{}/", snapshot_path),
+            identity_file: identity_file.clone(),
+        },
+        StorageLocation::RemoteRsync {
+            host, module, ..
+        } => StorageLocation::RemoteRsync {
+            host: host.clone(),
+            module: module.clone(),
+            path: format!("{}/", snapshot_path),
+        },
+    };
+
+    // Get the latest snapshot for --link-dest
+    let link_dest = job_service
+        .get_latest_snapshot(&job.id)
+        .map_err(|e| e.to_string())?
+        .map(|snap| snap.snapshot_path);
+
+    Ok(Some(SnapshotContext {
+        snapshot_path,
+        effective_destination,
+        link_dest,
+    }))
+}
+
+/// Shared execution logic for both manual and scheduled job runs.
+///
+/// Returns the invocation ID as a string, or an error message.
+pub fn run_job_internal(
+    job: &JobDefinition,
+    trigger: InvocationTrigger,
+    running_jobs: &RunningJobs,
+    job_service: Arc<JobService>,
+    statistics_service: Arc<StatisticsService>,
+    app_handle: tauri::AppHandle,
+) -> Result<String, String> {
+    let job_uuid = job.id;
+
+    // Reject if already running
+    if running_jobs.is_running(&job_uuid) {
+        return Err("Job is already running".to_string());
+    }
+
+    // Prepare snapshot context if applicable
+    let snapshot_ctx = prepare_snapshot_context(job, &job_service)?;
+
+    // Choose effective destination and link-dest
+    let effective_dest = snapshot_ctx
+        .as_ref()
+        .map(|ctx| &ctx.effective_destination)
+        .unwrap_or(&job.destination);
+    let link_dest = snapshot_ctx
+        .as_ref()
+        .and_then(|ctx| ctx.link_dest.as_deref());
+
+    // Build rsync args
+    let args = build_rsync_args(
+        &job.source,
+        effective_dest,
+        &job.options,
+        job.ssh_config.as_ref(),
+        link_dest,
+    );
+
+    let invocation_id = Uuid::new_v4();
+    let command_str = format!("rsync {}", args.join(" "));
+    let snapshot_path_for_record = snapshot_ctx.as_ref().map(|ctx| ctx.snapshot_path.clone());
+
+    // Create invocation record
+    let invocation = BackupInvocation {
+        id: invocation_id,
+        job_id: job_uuid,
+        started_at: Utc::now(),
+        finished_at: None,
+        status: InvocationStatus::Running,
+        bytes_transferred: 0,
+        files_transferred: 0,
+        total_files: 0,
+        snapshot_path: snapshot_path_for_record.clone(),
+        command_executed: command_str,
+        exit_code: None,
+        trigger: trigger.clone(),
+        log_file_path: None,
+    };
+
+    job_service
+        .record_invocation(&invocation)
+        .map_err(|e| e.to_string())?;
+
+    // Emit Running status
+    let _ = app_handle.emit(
+        "job-status",
+        JobStatusEvent {
+            job_id: job_uuid,
+            invocation_id,
+            status: JobStatus::Running,
+            exit_code: None,
+            error_message: None,
+        },
+    );
+
+    // Spawn rsync process
+    let (child, rx) = run_job("rsync", &args, invocation_id).map_err(|e| e.to_string())?;
+
+    // Store in running jobs
+    let _child_arc = running_jobs.insert(job_uuid, child);
+
+    // Capture snapshot info for the background thread
+    let is_snapshot_mode = snapshot_ctx.is_some();
+    let is_dry_run = job.options.dry_run;
+    let link_dest_for_record = snapshot_ctx
+        .as_ref()
+        .and_then(|ctx| ctx.link_dest.clone());
+
+    // Drain events in a background thread
+    let app = app_handle.clone();
+    std::thread::spawn(move || {
+        let mut last_bytes: u64 = 0;
+        let mut last_files: u64 = 0;
+        let mut last_total: u64 = 0;
+        let mut last_speedup: Option<f64> = None;
+
+        let speedup_re = Regex::new(r"speedup is ([\d.]+)").ok();
+
+        while let Ok(event) = rx.recv() {
+            match event {
+                ExecutionEvent::StdoutLine(line) => {
+                    // Parse speedup from rsync summary line
+                    if let Some(ref re) = speedup_re {
+                        if let Some(caps) = re.captures(&line) {
+                            if let Some(m) = caps.get(1) {
+                                if let Ok(val) = m.as_str().parse::<f64>() {
+                                    last_speedup = Some(val);
+                                }
+                            }
+                        }
+                    }
+
+                    let _ = app.emit(
+                        "job-log",
+                        LogLine {
+                            invocation_id,
+                            timestamp: Utc::now(),
+                            line,
+                            is_stderr: false,
+                        },
+                    );
+                }
+                ExecutionEvent::StderrLine(line) => {
+                    let _ = app.emit(
+                        "job-log",
+                        LogLine {
+                            invocation_id,
+                            timestamp: Utc::now(),
+                            line,
+                            is_stderr: true,
+                        },
+                    );
+                }
+                ExecutionEvent::Progress(progress) => {
+                    last_bytes = progress.bytes_transferred;
+                    last_files = progress.files_transferred;
+                    last_total = progress.files_total;
+                    let _ = app.emit("job-progress", &progress);
+                }
+                ExecutionEvent::Finished { .. } => {
+                    // Handled below after loop
+                }
+            }
+        }
+
+        // Receiver disconnected — reader threads are done.
+        // Remove from running jobs and wait for exit code.
+        let exit_code: Option<i32> = {
+            let app_state: tauri::State<'_, crate::state::AppState> = app.state();
+            if let Some(child_arc) = app_state.running_jobs.remove(&job_uuid) {
+                if let Ok(mut child) = child_arc.lock() {
+                    child
+                        .wait()
+                        .ok()
+                        .and_then(|s: std::process::ExitStatus| s.code())
+                } else {
+                    None
+                }
+            } else {
+                None
+            }
+        };
+
+        // On Unix, killed processes return None from .code()
+        let was_cancelled = exit_code.is_none();
+
+        let (status, job_status) = if was_cancelled && exit_code != Some(0) {
+            (InvocationStatus::Cancelled, JobStatus::Cancelled)
+        } else if exit_code == Some(0) {
+            (InvocationStatus::Succeeded, JobStatus::Completed)
+        } else {
+            (InvocationStatus::Failed, JobStatus::Failed)
+        };
+
+        // Update invocation record
+        let completed_invocation = BackupInvocation {
+            id: invocation_id,
+            job_id: job_uuid,
+            started_at: Utc::now(), // Will be overwritten by the record
+            finished_at: Some(Utc::now()),
+            status: status.clone(),
+            bytes_transferred: last_bytes,
+            files_transferred: last_files,
+            total_files: last_total,
+            snapshot_path: snapshot_path_for_record.clone(),
+            command_executed: String::new(),
+            exit_code,
+            trigger,
+            log_file_path: None,
+        };
+
+        let _ = job_service.complete_invocation(&completed_invocation);
+
+        // Record run statistics for successful non-dry-run completions
+        if status == InvocationStatus::Succeeded && !is_dry_run {
+            if let Err(e) = statistics_service.record(
+                job_uuid,
+                &completed_invocation,
+                last_speedup,
+            ) {
+                log::error!("Failed to record run statistics: {}", e);
+            }
+        }
+
+        // On success for snapshot-mode jobs: record snapshot and apply retention
+        // Skip snapshot recording for dry-run executions
+        if status == InvocationStatus::Succeeded && is_snapshot_mode && !is_dry_run {
+            if let Some(ref snap_path) = snapshot_path_for_record {
+                let snapshot = SnapshotRecord {
+                    id: Uuid::new_v4(),
+                    job_id: job_uuid,
+                    invocation_id,
+                    snapshot_path: snap_path.clone(),
+                    link_dest_path: link_dest_for_record,
+                    created_at: Utc::now(),
+                    size_bytes: last_bytes,
+                    file_count: last_files,
+                    is_latest: true,
+                };
+
+                if let Err(e) = job_service.record_snapshot(&snapshot) {
+                    log::error!("Failed to record snapshot: {}", e);
+                }
+
+                // Apply retention policy — prune old snapshots from DB
+                match job_service.apply_retention_policy(&job_uuid) {
+                    Ok(pruned_paths) => {
+                        for path in pruned_paths {
+                            log::info!("Retention: pruned snapshot {}", path);
+                            // Attempt to remove the directory on disk
+                            if let Err(e) = std::fs::remove_dir_all(&path) {
+                                log::error!(
+                                    "Failed to remove pruned snapshot dir {}: {}",
+                                    path,
+                                    e
+                                );
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        log::error!("Failed to apply retention policy: {}", e);
+                    }
+                }
+            }
+        }
+
+        let _ = app.emit(
+            "job-status",
+            JobStatusEvent {
+                job_id: job_uuid,
+                invocation_id,
+                status: job_status,
+                exit_code,
+                error_message: if status == InvocationStatus::Failed {
+                    Some(format!(
+                        "rsync exited with code {}",
+                        exit_code.unwrap_or(-1)
+                    ))
+                } else {
+                    None
+                },
+            },
+        );
+    });
+
+    Ok(invocation_id.to_string())
+}

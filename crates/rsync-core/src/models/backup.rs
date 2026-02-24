@@ -16,6 +16,7 @@ pub struct BackupInvocation {
     pub command_executed: String,
     pub exit_code: Option<i32>,
     pub trigger: InvocationTrigger,
+    pub log_file_path: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

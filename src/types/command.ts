@@ -1,0 +1,18 @@
+export interface ArgumentExplanation {
+  argument: string;
+  description: string;
+  category: ArgCategory;
+}
+
+export type ArgCategory =
+  | "Flag"
+  | "Pattern"
+  | "Path"
+  | "Ssh"
+  | "Performance"
+  | "Unknown";
+
+export interface CommandExplanation {
+  arguments: ArgumentExplanation[];
+  summary: string;
+}
