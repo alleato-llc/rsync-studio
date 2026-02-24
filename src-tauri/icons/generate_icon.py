@@ -25,8 +25,8 @@ TRANSPARENT = (0, 0, 0, 0)
 # Arrow arc parameters
 ARROW_RADIUS = 355  # radius of arrow centerline
 ARROW_THICKNESS = 68  # stroke width of arcs
-ARROWHEAD_LENGTH = 90  # length of arrowhead triangle
-ARROWHEAD_HALF_WIDTH = 52  # half-width of arrowhead base
+ARROWHEAD_LENGTH = 120  # length of arrowhead triangle
+ARROWHEAD_HALF_WIDTH = 65  # half-width of arrowhead base
 
 # Arc angular parameters (Pillow angles: 0=east, CW, degrees)
 # Gap centers at ~330° (1 o'clock) and ~150° (7 o'clock)
@@ -71,9 +71,9 @@ def draw_arrowhead(draw, cx, cy, r, angle_deg, length, half_width, color):
     tip_x = px + length * tx
     tip_y = py + length * ty
 
-    # Arrowhead base points: offset back and to each side
-    base_cx = px - (length * 0.2) * tx  # slightly behind the arc endpoint
-    base_cy = py - (length * 0.2) * ty
+    # Arrowhead base points: offset back to overlap with the arc end
+    base_cx = px - (length * 0.35) * tx
+    base_cy = py - (length * 0.35) * ty
 
     base1_x = base_cx + half_width * nx
     base1_y = base_cy + half_width * ny
