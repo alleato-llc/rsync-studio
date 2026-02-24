@@ -1,5 +1,8 @@
 # Rsync Studio
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Built with Claude](https://img.shields.io/badge/Built%20with-Claude-blueviolet)](https://claude.ai)
+
 A cross-platform desktop application for managing rsync backup jobs. Built with Tauri v2, React, TypeScript, and Rust.
 
 ## Features
