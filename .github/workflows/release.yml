@@ -33,13 +33,11 @@ jobs:
           - runner: macos-latest
             os: darwin
             arch: arm64
-            build-tui: true
-            build-desktop: true
+            bundles: dmg
           - runner: ubuntu-latest
             os: linux
             arch: amd64
-            build-tui: true
-            build-desktop: true
+            bundles: deb,appimage
 
     runs-on: ${{ matrix.runner }}
     steps:
@@ -73,7 +71,7 @@ jobs:
         run: cargo build -p rsync-commander --release
 
       - name: Build Tauri app
-        run: npm run tauri build
+        run: npm run tauri build -- --bundles ${{ matrix.bundles }}
 
       - name: Collect release artifacts
         shell: bash
@@ -84,12 +82,7 @@ jobs:
           cp target/release/rsync-commander dist/rsync-commander-${{ matrix.os }}-${{ matrix.arch }}
 
           # Desktop app bundles
-          if [ "${{ matrix.os }}" = "darwin" ]; then
-            cp target/release/bundle/dmg/*.dmg dist/
-          elif [ "${{ matrix.os }}" = "linux" ]; then
-            cp target/release/bundle/deb/*.deb dist/
-            cp target/release/bundle/appimage/*.AppImage dist/
-          fi
+          find target/release/bundle -name '*.dmg' -o -name '*.deb' -o -name '*.AppImage' | xargs -I {} cp {} dist/
 
       - name: Upload to release
         shell: bash
