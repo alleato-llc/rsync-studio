@@ -1,3 +1,6 @@
+use uuid::Uuid;
+
+use crate::models::itemize::ItemizedChange;
 use crate::models::progress::{JobStatusEvent, LogLine, ProgressUpdate};
 
 /// Trait for receiving execution events from a running job.
@@ -8,4 +11,5 @@ pub trait ExecutionEventHandler: Send + Sync {
     fn on_log_line(&self, log_line: LogLine);
     fn on_progress(&self, progress: &ProgressUpdate);
     fn on_status_change(&self, status: JobStatusEvent);
+    fn on_itemized_change(&self, invocation_id: Uuid, change: &ItemizedChange);
 }

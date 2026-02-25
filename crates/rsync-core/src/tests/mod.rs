@@ -26,3 +26,7 @@ mod log_scrubber_tests;
 mod running_jobs_tests;
 #[cfg(test)]
 mod retention_runner_tests;
+#[cfg(test)]
+mod itemize_parser_tests;
+#[cfg(test)]
+mod settings_service_tests;

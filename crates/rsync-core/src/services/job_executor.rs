@@ -318,6 +318,9 @@ impl JobExecutor {
                         last_total = progress.files_total;
                         handler.on_progress(&progress);
                     }
+                    ExecutionEvent::ItemizedChange(change) => {
+                        handler.on_itemized_change(invocation_id, &change);
+                    }
                     ExecutionEvent::Finished { .. } => {
                         // Handled below after loop
                     }

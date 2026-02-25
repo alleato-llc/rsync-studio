@@ -1,30 +1,44 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import type { ProgressUpdate, LogLine, JobStatusEvent } from "@/types/progress";
+import type { ItemizedChange } from "@/types/itemize";
 import type { JobStatus } from "@/types/job";
-import { executeJob as invokeExecute, executeDryRun as invokeDryRun, cancelJob as invokeCancel, getRunningJobs } from "@/lib/tauri";
+import { executeJob as invokeExecute, executeDryRun as invokeDryRun, cancelJob as invokeCancel, getRunningJobs, getMaxItemizedChanges, getLogDirectory } from "@/lib/tauri";
 
 const MAX_LOG_LINES = 10_000;
 
 interface JobExecutionState {
   status: JobStatus;
   invocationId: string | null;
+  isDryRun: boolean;
   progress: ProgressUpdate | null;
   logs: LogLine[];
+  itemizedChanges: ItemizedChange[];
+  isTruncated: boolean;
+  logFilePath: string | null;
   error: string | null;
 }
 
 const initialState: JobExecutionState = {
   status: "Idle",
   invocationId: null,
+  isDryRun: false,
   progress: null,
   logs: [],
+  itemizedChanges: [],
+  isTruncated: false,
+  logFilePath: null,
   error: null,
 };
 
 export function useJobExecution() {
   const [jobs, setJobs] = useState<Map<string, JobExecutionState>>(new Map());
   const unlistenRefs = useRef<UnlistenFn[]>([]);
+  const maxItemizedRef = useRef(50_000);
+
+  useEffect(() => {
+    getMaxItemizedChanges().then((v) => { maxItemizedRef.current = v; }).catch(console.error);
+  }, []);
 
   const getOrDefault = useCallback(
     (jobId: string): JobExecutionState => jobs.get(jobId) ?? { ...initialState },
@@ -81,6 +95,32 @@ export function useJobExecution() {
         });
       });
 
+      const unlistenItemize = await listen<{ invocation_id: string; change: ItemizedChange }>("job-itemized-change", (event) => {
+        const { invocation_id, change } = event.payload;
+        setJobs((prev) => {
+          const next = new Map(prev);
+          const jobEntries = Array.from(next.entries());
+          const match = jobEntries.find(
+            ([, state]) => state.invocationId === invocation_id
+          );
+          if (match) {
+            const [jobId, state] = match;
+            const maxItems = maxItemizedRef.current;
+            if (state.itemizedChanges.length >= maxItems) {
+              if (!state.isTruncated) {
+                next.set(jobId, { ...state, isTruncated: true });
+              }
+              return next;
+            }
+            next.set(jobId, {
+              ...state,
+              itemizedChanges: [...state.itemizedChanges, change],
+            });
+          }
+          return next;
+        });
+      });
+
       const unlistenStatus = await listen<JobStatusEvent>("job-status", (event) => {
         const status = event.payload;
         updateJob(status.job_id, {
@@ -90,7 +130,7 @@ export function useJobExecution() {
         });
       });
 
-      unlistenRefs.current = [unlistenLog, unlistenProgress, unlistenStatus];
+      unlistenRefs.current = [unlistenLog, unlistenProgress, unlistenItemize, unlistenStatus];
     };
 
     setupListeners();
@@ -111,15 +151,21 @@ export function useJobExecution() {
 
   const runJob = useCallback(
     async (jobId: string) => {
+      updateJob(jobId, {
+        status: "Running",
+        invocationId: null,
+        isDryRun: false,
+        progress: null,
+        logs: [],
+        itemizedChanges: [],
+        isTruncated: false,
+        logFilePath: null,
+        error: null,
+      });
       try {
         const invocationId = await invokeExecute(jobId);
-        updateJob(jobId, {
-          status: "Running",
-          invocationId,
-          progress: null,
-          logs: [],
-          error: null,
-        });
+        const logDir = await getLogDirectory();
+        updateJob(jobId, { invocationId, logFilePath: `${logDir}/${invocationId}.log` });
       } catch (err) {
         updateJob(jobId, {
           status: "Failed",
@@ -132,15 +178,21 @@ export function useJobExecution() {
 
   const runDryRun = useCallback(
     async (jobId: string) => {
+      updateJob(jobId, {
+        status: "Running",
+        invocationId: null,
+        isDryRun: true,
+        progress: null,
+        logs: [],
+        itemizedChanges: [],
+        isTruncated: false,
+        logFilePath: null,
+        error: null,
+      });
       try {
         const invocationId = await invokeDryRun(jobId);
-        updateJob(jobId, {
-          status: "Running",
-          invocationId,
-          progress: null,
-          logs: [],
-          error: null,
-        });
+        const logDir = await getLogDirectory();
+        updateJob(jobId, { invocationId, logFilePath: `${logDir}/${invocationId}.log` });
       } catch (err) {
         updateJob(jobId, {
           status: "Failed",
@@ -194,6 +246,26 @@ export function useJobExecution() {
     [getOrDefault]
   );
 
+  const getItemizedChanges = useCallback(
+    (jobId: string): ItemizedChange[] => getOrDefault(jobId).itemizedChanges,
+    [getOrDefault]
+  );
+
+  const getIsTruncated = useCallback(
+    (jobId: string): boolean => getOrDefault(jobId).isTruncated,
+    [getOrDefault]
+  );
+
+  const getLogFilePath = useCallback(
+    (jobId: string): string | null => getOrDefault(jobId).logFilePath,
+    [getOrDefault]
+  );
+
+  const getIsDryRun = useCallback(
+    (jobId: string): boolean => getOrDefault(jobId).isDryRun,
+    [getOrDefault]
+  );
+
   return {
     runJob,
     runDryRun,
@@ -204,5 +276,9 @@ export function useJobExecution() {
     getStatus,
     getError,
     getInvocationId,
+    getItemizedChanges,
+    getIsTruncated,
+    getLogFilePath,
+    getIsDryRun,
   };
 }

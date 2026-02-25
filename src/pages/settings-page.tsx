@@ -29,6 +29,11 @@ export function SettingsPage() {
   // Trailing slash state
   const [autoTrailingSlash, setAutoTrailingSlashState] = useState(true);
 
+  // Dry mode state
+  const [dryModeItemize, setDryModeItemize] = useState(false);
+  const [dryModeChecksum, setDryModeChecksum] = useState(false);
+  const [maxItemized, setMaxItemized] = useState(50000);
+
   // Log directory state
   const [logDir, setLogDir] = useState("");
   const [logDirStatus, setLogDirStatus] = useState<{
@@ -47,6 +52,14 @@ export function SettingsPage() {
 
   useEffect(() => {
     api.getAutoTrailingSlash().then(setAutoTrailingSlashState).catch(console.error);
+    api
+      .getDryModeSettings()
+      .then((s) => {
+        setDryModeItemize(s.itemize_changes);
+        setDryModeChecksum(s.checksum);
+      })
+      .catch(console.error);
+    api.getMaxItemizedChanges().then(setMaxItemized).catch(console.error);
     api.getLogDirectory().then(setLogDir).catch(console.error);
     api
       .getRetentionSettings()
@@ -252,6 +265,78 @@ export function SettingsPage() {
               onCheckedChange={async (checked) => {
                 setAutoTrailingSlashState(checked);
                 await api.setAutoTrailingSlash(checked);
+              }}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Dry Mode */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Dry Mode</CardTitle>
+          <CardDescription>
+            Configure options applied automatically when running dry-run
+            executions via the Flask button.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="dry-mode-itemize">Itemize Changes</Label>
+              <p className="text-xs text-muted-foreground">
+                Add --itemize-changes to show a per-file change summary during
+                dry runs.
+              </p>
+            </div>
+            <Switch
+              id="dry-mode-itemize"
+              checked={dryModeItemize}
+              onCheckedChange={async (checked) => {
+                setDryModeItemize(checked);
+                await api.setDryModeSettings({
+                  itemize_changes: checked,
+                  checksum: dryModeChecksum,
+                });
+              }}
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="dry-mode-checksum">Enable Checksum</Label>
+              <p className="text-xs text-muted-foreground">
+                Add --checksum to use checksums for more accurate change detection
+                during dry runs.
+              </p>
+            </div>
+            <Switch
+              id="dry-mode-checksum"
+              checked={dryModeChecksum}
+              onCheckedChange={async (checked) => {
+                setDryModeChecksum(checked);
+                await api.setDryModeSettings({
+                  itemize_changes: dryModeItemize,
+                  checksum: checked,
+                });
+              }}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="max-itemized">Max itemized changes</Label>
+            <p className="text-xs text-muted-foreground">
+              Maximum number of entries shown in the itemized changes table.
+              Reduce if dry runs on very large directories cause slowdowns.
+            </p>
+            <Input
+              id="max-itemized"
+              type="number"
+              min={100}
+              className="max-w-xs"
+              value={maxItemized}
+              onChange={async (e) => {
+                const val = parseInt(e.target.value) || 50000;
+                setMaxItemized(val);
+                await api.setMaxItemizedChanges(val);
               }}
             />
           </div>

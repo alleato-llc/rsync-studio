@@ -147,6 +147,36 @@ export async function setAutoTrailingSlash(enabled: boolean): Promise<void> {
   return invoke<void>("set_auto_trailing_slash", { enabled });
 }
 
+// --- Max itemized changes ---
+
+const DEFAULT_MAX_ITEMIZED = 50_000;
+
+export async function getMaxItemizedChanges(): Promise<number> {
+  const val = await getSetting("max_itemized_changes");
+  return val ? parseInt(val, 10) : DEFAULT_MAX_ITEMIZED;
+}
+
+export async function setMaxItemizedChanges(value: number): Promise<void> {
+  return setSetting("max_itemized_changes", value.toString());
+}
+
+// --- Dry mode settings ---
+
+export interface DryModeSettings {
+  itemize_changes: boolean;
+  checksum: boolean;
+}
+
+export async function getDryModeSettings(): Promise<DryModeSettings> {
+  return invoke<DryModeSettings>("get_dry_mode_settings");
+}
+
+export async function setDryModeSettings(
+  settings: DryModeSettings
+): Promise<void> {
+  return invoke<void>("set_dry_mode_settings", { settings });
+}
+
 // --- Delete history ---
 
 export async function deleteInvocation(invocationId: string): Promise<void> {

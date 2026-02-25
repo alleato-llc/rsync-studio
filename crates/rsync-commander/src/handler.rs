@@ -1,5 +1,8 @@
 use std::sync::mpsc::Sender;
 
+use uuid::Uuid;
+
+use rsync_core::models::itemize::ItemizedChange;
 use rsync_core::models::progress::{JobStatusEvent, LogLine, ProgressUpdate};
 use rsync_core::services::execution_handler::ExecutionEventHandler;
 
@@ -33,5 +36,9 @@ impl ExecutionEventHandler for TuiEventHandler {
 
     fn on_status_change(&self, status: JobStatusEvent) {
         let _ = self.sender.send(TuiEvent::StatusChange(status));
+    }
+
+    fn on_itemized_change(&self, _invocation_id: Uuid, _change: &ItemizedChange) {
+        // No-op for TUI — itemized changes are shown in raw log output
     }
 }

@@ -1,7 +1,16 @@
+use serde::Serialize;
 use tauri::Emitter;
+use uuid::Uuid;
 
+use rsync_core::models::itemize::ItemizedChange;
 use rsync_core::models::progress::{JobStatusEvent, LogLine, ProgressUpdate};
 use rsync_core::services::execution_handler::ExecutionEventHandler;
+
+#[derive(Debug, Clone, Serialize)]
+struct ItemizedChangePayload {
+    invocation_id: Uuid,
+    change: ItemizedChange,
+}
 
 /// GUI implementation of ExecutionEventHandler that emits Tauri events.
 pub struct TauriEventHandler {
@@ -25,5 +34,15 @@ impl ExecutionEventHandler for TauriEventHandler {
 
     fn on_status_change(&self, status: JobStatusEvent) {
         let _ = self.app_handle.emit("job-status", status);
+    }
+
+    fn on_itemized_change(&self, invocation_id: Uuid, change: &ItemizedChange) {
+        let _ = self.app_handle.emit(
+            "job-itemized-change",
+            ItemizedChangePayload {
+                invocation_id,
+                change: change.clone(),
+            },
+        );
     }
 }

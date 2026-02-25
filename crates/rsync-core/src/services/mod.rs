@@ -4,6 +4,7 @@ pub mod command_parser;
 pub mod execution_handler;
 pub mod export_import;
 pub mod history_retention;
+pub mod itemize_parser;
 pub mod job_executor;
 pub mod job_runner;
 pub mod job_service;

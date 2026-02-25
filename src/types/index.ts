@@ -22,6 +22,13 @@ export type {
 export type { ProgressUpdate, LogLine, JobStatusEvent } from "./progress";
 
 export type {
+  ItemizedChange,
+  TransferType,
+  FileType,
+  DifferenceKind,
+} from "./itemize";
+
+export type {
   PreflightResult,
   ValidationCheck,
   CheckType,

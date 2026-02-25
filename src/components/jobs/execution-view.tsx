@@ -1,9 +1,11 @@
 import type { JobDefinition, JobStatus } from "@/types/job";
 import type { ProgressUpdate, LogLine } from "@/types/progress";
+import type { ItemizedChange } from "@/types/itemize";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Square } from "lucide-react";
 import { ProgressDisplay } from "./progress-display";
+import { ItemizedChangesTable } from "./itemized-changes-table";
 import { VirtualLogViewer } from "@/components/logs/virtual-log-viewer";
 import { buildCommandString } from "@/lib/command-preview";
 import { useTrailingSlash } from "@/hooks/use-trailing-slash";
@@ -11,8 +13,12 @@ import { useTrailingSlash } from "@/hooks/use-trailing-slash";
 interface ExecutionViewProps {
   job: JobDefinition;
   status: JobStatus;
+  isDryRun?: boolean;
   progress: ProgressUpdate | null;
   logs: LogLine[];
+  itemizedChanges?: ItemizedChange[];
+  isTruncated?: boolean;
+  logFilePath?: string | null;
   error: string | null;
   onCancel: () => void;
   onBack: () => void;
@@ -36,8 +42,12 @@ function statusBadgeVariant(status: JobStatus): "default" | "secondary" | "destr
 export function ExecutionView({
   job,
   status,
+  isDryRun,
   progress,
   logs,
+  itemizedChanges,
+  isTruncated,
+  logFilePath,
   error,
   onCancel,
   onBack,
@@ -84,8 +94,24 @@ export function ExecutionView({
         </div>
       )}
 
+      {isDryRun && itemizedChanges && (
+        <ItemizedChangesTable
+          changes={itemizedChanges}
+          isStreaming={status === "Running"}
+          isTruncated={isTruncated}
+          logFilePath={logFilePath}
+        />
+      )}
+
       <div className="space-y-2">
-        <h3 className="text-sm font-medium">Output</h3>
+        <div className="flex items-center gap-2">
+          <h3 className="text-sm font-medium">Output</h3>
+          {logFilePath && (
+            <span className="text-xs text-muted-foreground font-mono truncate max-w-md" title={logFilePath}>
+              {logFilePath}
+            </span>
+          )}
+        </div>
         <VirtualLogViewer logs={logs} height={400} autoScroll={status === "Running"} />
       </div>
 

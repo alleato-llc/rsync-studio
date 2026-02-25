@@ -3,12 +3,15 @@ use std::sync::Arc;
 use serde::{Deserialize, Serialize};
 
 use crate::error::AppError;
+use crate::models::job::JobDefinition;
 use crate::repository::settings::SettingsRepository;
 
 const KEY_LOG_DIRECTORY: &str = "log_directory";
 const KEY_MAX_LOG_AGE_DAYS: &str = "max_log_age_days";
 const KEY_MAX_HISTORY_PER_JOB: &str = "max_history_per_job";
 const KEY_AUTO_TRAILING_SLASH: &str = "auto_trailing_slash";
+const KEY_DRY_MODE_ITEMIZE_CHANGES: &str = "dry_mode_itemize_changes";
+const KEY_DRY_MODE_CHECKSUM: &str = "dry_mode_checksum";
 
 const DEFAULT_AUTO_TRAILING_SLASH: bool = true;
 
@@ -19,6 +22,12 @@ const DEFAULT_MAX_HISTORY_PER_JOB: usize = 15;
 pub struct RetentionSettings {
     pub max_log_age_days: u32,
     pub max_history_per_job: usize,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct DryModeSettings {
+    pub itemize_changes: bool,
+    pub checksum: bool,
 }
 
 pub struct SettingsService {
@@ -90,5 +99,59 @@ impl SettingsService {
         self.settings
             .set_setting(KEY_MAX_HISTORY_PER_JOB, &settings.max_history_per_job.to_string())?;
         Ok(())
+    }
+
+    pub fn get_dry_mode_settings(&self) -> Result<DryModeSettings, AppError> {
+        let itemize_changes = self
+            .settings
+            .get_setting(KEY_DRY_MODE_ITEMIZE_CHANGES)?
+            .map(|v| v == "true")
+            .unwrap_or(false);
+
+        let checksum = self
+            .settings
+            .get_setting(KEY_DRY_MODE_CHECKSUM)?
+            .map(|v| v == "true")
+            .unwrap_or(false);
+
+        Ok(DryModeSettings {
+            itemize_changes,
+            checksum,
+        })
+    }
+
+    pub fn set_dry_mode_settings(&self, settings: &DryModeSettings) -> Result<(), AppError> {
+        self.settings.set_setting(
+            KEY_DRY_MODE_ITEMIZE_CHANGES,
+            if settings.itemize_changes { "true" } else { "false" },
+        )?;
+        self.settings.set_setting(
+            KEY_DRY_MODE_CHECKSUM,
+            if settings.checksum { "true" } else { "false" },
+        )?;
+        Ok(())
+    }
+}
+
+/// Apply dry-mode settings to a job definition by injecting the appropriate
+/// custom args (--itemize-changes, --checksum) if enabled and not already present.
+pub fn apply_dry_mode_settings(job: &mut JobDefinition, settings: &DryModeSettings) {
+    if settings.itemize_changes
+        && !job
+            .options
+            .custom_args
+            .contains(&"--itemize-changes".to_string())
+    {
+        job.options
+            .custom_args
+            .push("--itemize-changes".to_string());
+    }
+    if settings.checksum
+        && !job
+            .options
+            .custom_args
+            .contains(&"--checksum".to_string())
+    {
+        job.options.custom_args.push("--checksum".to_string());
     }
 }

@@ -16,7 +16,7 @@ use rsync_core::services::command_parser;
 use rsync_core::services::export_import;
 use rsync_core::services::log_scrubber::{self, ScrubApplyResult, ScrubScanResult};
 use rsync_core::services::preflight;
-use rsync_core::services::settings_service::RetentionSettings;
+use rsync_core::services::settings_service::{self, DryModeSettings, RetentionSettings};
 
 use crate::execution::TauriEventHandler;
 use crate::state::AppState;
@@ -114,6 +114,13 @@ pub fn execute_job_dry_run(
         .map_err(|e| e.to_string())?;
 
     job.options.dry_run = true;
+
+    // Apply app-wide dry-mode settings (itemize-changes, checksum)
+    let dry_settings = state
+        .settings_service
+        .get_dry_mode_settings()
+        .map_err(|e| e.to_string())?;
+    settings_service::apply_dry_mode_settings(&mut job, &dry_settings);
 
     let handler = Arc::new(TauriEventHandler::new(app));
     state
@@ -336,6 +343,27 @@ pub fn set_auto_trailing_slash(enabled: bool, state: State<'_, AppState>) -> Res
     state
         .settings_service
         .set_auto_trailing_slash(enabled)
+        .map_err(|e| e.to_string())
+}
+
+// --- Dry mode settings ---
+
+#[tauri::command]
+pub fn get_dry_mode_settings(state: State<'_, AppState>) -> Result<DryModeSettings, String> {
+    state
+        .settings_service
+        .get_dry_mode_settings()
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn set_dry_mode_settings(
+    settings: DryModeSettings,
+    state: State<'_, AppState>,
+) -> Result<(), String> {
+    state
+        .settings_service
+        .set_dry_mode_settings(&settings)
         .map_err(|e| e.to_string())
 }
 

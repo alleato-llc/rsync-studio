@@ -214,6 +214,8 @@ pub fn run() {
             commands::set_retention_settings,
             commands::get_auto_trailing_slash,
             commands::set_auto_trailing_slash,
+            commands::get_dry_mode_settings,
+            commands::set_dry_mode_settings,
             commands::delete_invocation,
             commands::delete_invocations_for_job,
             commands::count_invocations,

@@ -15,7 +15,6 @@ const BOOLEAN_FLAGS: { key: keyof RsyncOptions; label: string; description: stri
   { key: "compress", label: "Compress (-z)", description: "Compress data during transfer" },
   { key: "verbose", label: "Verbose (-v)", description: "Show detailed output" },
   { key: "delete", label: "Delete (--delete)", description: "Delete extraneous files from dest" },
-  { key: "dry_run", label: "Dry Run (--dry-run)", description: "Show what would be transferred" },
   { key: "partial", label: "Partial (--partial)", description: "Keep partially transferred files" },
   { key: "progress", label: "Progress (--progress)", description: "Show transfer progress" },
   { key: "human_readable", label: "Human Readable (-h)", description: "Output numbers in readable format" },

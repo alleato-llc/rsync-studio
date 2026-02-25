@@ -5,6 +5,8 @@ use std::sync::mpsc::{self, Receiver};
 use uuid::Uuid;
 
 use crate::error::AppError;
+use crate::models::itemize::ItemizedChange;
+use crate::services::itemize_parser::parse_itemize_line;
 use crate::services::progress_parser::parse_progress_line;
 use crate::rsync_client::RsyncError;
 
@@ -13,6 +15,7 @@ pub enum ExecutionEvent {
     StdoutLine(String),
     StderrLine(String),
     Progress(crate::models::progress::ProgressUpdate),
+    ItemizedChange(ItemizedChange),
     Finished { exit_code: Option<i32> },
 }
 
@@ -56,6 +59,9 @@ pub fn run_job(
                 Ok(text) => {
                     if let Some(progress) = parse_progress_line(&text, inv_id) {
                         let _ = tx_out.send(ExecutionEvent::Progress(progress));
+                    }
+                    if let Some(change) = parse_itemize_line(&text) {
+                        let _ = tx_out.send(ExecutionEvent::ItemizedChange(change));
                     }
                     let _ = tx_out.send(ExecutionEvent::StdoutLine(text));
                 }

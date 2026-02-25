@@ -83,8 +83,12 @@ export function JobsPage() {
       <ExecutionView
         job={job}
         status={execution.getStatus(job.id)}
+        isDryRun={execution.getIsDryRun(job.id)}
         progress={execution.getProgress(job.id)}
         logs={execution.getLogs(job.id)}
+        itemizedChanges={execution.getItemizedChanges(job.id)}
+        isTruncated={execution.getIsTruncated(job.id)}
+        logFilePath={execution.getLogFilePath(job.id)}
         error={execution.getError(job.id)}
         onCancel={() => execution.cancelJob(job.id)}
         onBack={() => setCurrentView({ view: "list" })}
