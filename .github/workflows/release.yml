@@ -71,7 +71,7 @@ jobs:
         run: cargo build -p rsync-commander --release
 
       - name: Build Tauri app
-        run: npm run tauri build -- --bundles ${{ matrix.bundles }}
+        run: npx tauri build --bundles ${{ matrix.bundles }}
 
       - name: Collect release artifacts
         shell: bash
