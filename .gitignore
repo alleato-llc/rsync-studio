@@ -19,5 +19,9 @@ dist/
 # Claude Code
 .claude/
 
+# Tauri mobile icons (not targeting mobile platforms)
+src-tauri/icons/android/
+src-tauri/icons/ios/
+
 # macOS
 .DS_Store
