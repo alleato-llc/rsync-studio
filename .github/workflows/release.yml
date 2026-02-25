@@ -85,10 +85,10 @@ jobs:
 
           # Desktop app bundles
           if [ "${{ matrix.os }}" = "darwin" ]; then
-            cp src-tauri/target/release/bundle/dmg/*.dmg dist/
+            cp target/release/bundle/dmg/*.dmg dist/
           elif [ "${{ matrix.os }}" = "linux" ]; then
-            cp src-tauri/target/release/bundle/deb/*.deb dist/
-            cp src-tauri/target/release/bundle/appimage/*.AppImage dist/
+            cp target/release/bundle/deb/*.deb dist/
+            cp target/release/bundle/appimage/*.AppImage dist/
           fi
 
       - name: Upload to release

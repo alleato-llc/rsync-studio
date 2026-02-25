@@ -142,15 +142,15 @@ jobs:
         shell: bash
         run: |
           mkdir -p dist
-          cp src-tauri/target/release/bundle/dmg/*.dmg dist/
+          cp target/release/bundle/dmg/*.dmg dist/
 
       - name: Collect Linux bundles
         if: matrix.os == 'linux'
         shell: bash
         run: |
           mkdir -p dist
-          cp src-tauri/target/release/bundle/deb/*.deb dist/
-          cp src-tauri/target/release/bundle/appimage/*.AppImage dist/
+          cp target/release/bundle/deb/*.deb dist/
+          cp target/release/bundle/appimage/*.AppImage dist/
 
       - name: Determine retention days
         id: retention
