@@ -5,6 +5,7 @@ import type { CommandExplanation } from "@/types/command";
 import type { AggregatedStats } from "@/types/statistics";
 import type { PreflightResult } from "@/types/validation";
 import type { LogFileChunk } from "@/types/log-file";
+import type { ScrubScanResult, ScrubApplyResult } from "@/types/scrubber";
 
 export async function listJobs(): Promise<JobDefinition[]> {
   return invoke<JobDefinition[]>("list_jobs");
@@ -172,4 +173,19 @@ export async function readLogFileLines(
   limit: number
 ): Promise<LogFileChunk> {
   return invoke<LogFileChunk>("read_log_file_lines", { path, offset, limit });
+}
+
+// --- Log scrubber ---
+
+export async function scrubScanLogs(
+  pattern: string
+): Promise<ScrubScanResult[]> {
+  return invoke<ScrubScanResult[]>("scrub_scan_logs", { pattern });
+}
+
+export async function scrubApplyLogs(
+  pattern: string,
+  filePaths: string[]
+): Promise<ScrubApplyResult[]> {
+  return invoke<ScrubApplyResult[]>("scrub_apply_logs", { pattern, filePaths });
 }

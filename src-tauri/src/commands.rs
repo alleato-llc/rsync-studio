@@ -14,6 +14,7 @@ use rsync_core::models::validation::PreflightResult;
 use rsync_core::services::command_explainer::{self, CommandExplanation};
 use rsync_core::services::command_parser;
 use rsync_core::services::export_import;
+use rsync_core::services::log_scrubber::{self, ScrubApplyResult, ScrubScanResult};
 use rsync_core::services::preflight;
 use rsync_core::services::settings_service::RetentionSettings;
 
@@ -410,6 +411,30 @@ pub fn count_invocations(state: State<'_, AppState>) -> Result<usize, String> {
         .list_all_invocations()
         .map(|inv| inv.len())
         .map_err(|e| e.to_string())
+}
+
+// --- Log scrubber commands ---
+
+#[tauri::command]
+pub fn scrub_scan_logs(
+    pattern: String,
+    state: State<'_, AppState>,
+) -> Result<Vec<ScrubScanResult>, String> {
+    let log_dir = state
+        .settings_service
+        .get_log_directory()
+        .map(|opt| opt.unwrap_or_else(|| state.default_log_dir.clone()))
+        .map_err(|e| e.to_string())?;
+
+    log_scrubber::scrub_scan(&log_dir, &pattern).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn scrub_apply_logs(
+    pattern: String,
+    file_paths: Vec<String>,
+) -> Result<Vec<ScrubApplyResult>, String> {
+    log_scrubber::scrub_apply(&pattern, &file_paths).map_err(|e| e.to_string())
 }
 
 // --- Log file commands ---

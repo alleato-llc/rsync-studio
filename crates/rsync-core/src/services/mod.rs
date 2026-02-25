@@ -5,6 +5,7 @@ pub mod export_import;
 pub mod history_retention;
 pub mod job_runner;
 pub mod job_service;
+pub mod log_scrubber;
 pub mod preflight;
 pub mod progress_parser;
 pub mod retention;

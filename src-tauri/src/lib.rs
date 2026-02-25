@@ -195,6 +195,8 @@ pub fn run() {
             commands::count_invocations,
             commands::read_log_file,
             commands::read_log_file_lines,
+            commands::scrub_scan_logs,
+            commands::scrub_apply_logs,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -229,13 +231,20 @@ fn setup_tray(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
             _ => {}
         })
         .on_tray_icon_event(|tray, event| {
-            if let tauri::tray::TrayIconEvent::Click { .. } = event {
+            if let tauri::tray::TrayIconEvent::Click {
+                button: tauri::tray::MouseButton::Left,
+                ..
+            } = event
+            {
                 let app = tray.app_handle();
                 if let Some(win) = app.get_webview_window("main") {
-                    if win.is_visible().unwrap_or(false) {
+                    let visible = win.is_visible().unwrap_or(false);
+                    let minimized = win.is_minimized().unwrap_or(false);
+                    if visible && !minimized {
                         let _ = win.hide();
                     } else {
                         let _ = win.show();
+                        let _ = win.unminimize();
                         let _ = win.set_focus();
                     }
                 }

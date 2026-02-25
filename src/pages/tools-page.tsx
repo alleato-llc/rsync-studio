@@ -12,6 +12,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { LogScrubber } from "@/components/log-scrubber";
 
 function categoryVariant(
   category: ArgCategory
@@ -77,81 +79,100 @@ export function ToolsPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-2xl font-bold">Command Tools</h2>
-        <p className="text-muted-foreground mt-1">
-          Paste an rsync command to see what each argument does, or import it as
-          a job.
-        </p>
+        <h2 className="text-2xl font-bold">Tools</h2>
       </div>
 
-      <div className="space-y-2">
-        <Textarea
-          value={command}
-          onChange={(e) => setCommand(e.target.value)}
-          placeholder="rsync -avz --delete --exclude=*.log /source/ user@host:/backup/"
-          className="font-mono text-sm min-h-[80px]"
-        />
-        <div className="flex gap-2">
-          <Button onClick={handleExplain} disabled={loading || !command.trim()}>
-            {loading ? "Analyzing..." : "Explain Command"}
-          </Button>
-          <Button
-            variant="outline"
-            onClick={handleImport}
-            disabled={loading || !command.trim()}
-          >
-            Import as Job
-          </Button>
-        </div>
-      </div>
+      <Tabs defaultValue="explainer">
+        <TabsList>
+          <TabsTrigger value="explainer">Command Explainer</TabsTrigger>
+          <TabsTrigger value="scrubber">Log Scrubber</TabsTrigger>
+        </TabsList>
 
-      {error && (
-        <Card className="border-destructive">
-          <CardContent className="pt-4">
-            <p className="text-sm text-destructive">{error}</p>
-          </CardContent>
-        </Card>
-      )}
+        <TabsContent value="explainer">
+          <div className="space-y-4">
+            <p className="text-muted-foreground">
+              Paste an rsync command to see what each argument does, or import it
+              as a job.
+            </p>
 
-      {explanation && (
-        <div className="space-y-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm">Summary</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm">{explanation.summary}</p>
-            </CardContent>
-          </Card>
+            <div className="space-y-2">
+              <Textarea
+                value={command}
+                onChange={(e) => setCommand(e.target.value)}
+                placeholder="rsync -avz --delete --exclude=*.log /source/ user@host:/backup/"
+                className="font-mono text-sm min-h-[80px]"
+              />
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleExplain}
+                  disabled={loading || !command.trim()}
+                >
+                  {loading ? "Analyzing..." : "Explain Command"}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleImport}
+                  disabled={loading || !command.trim()}
+                >
+                  Import as Job
+                </Button>
+              </div>
+            </div>
 
-          <ScrollArea className="h-[calc(100vh-26rem)]">
-            <div className="space-y-2 pr-4">
-              {explanation.arguments.map((arg, i) => (
-                <Card key={i}>
-                  <CardHeader className="py-3 pb-1">
-                    <div className="flex items-center gap-2">
-                      <code className="text-sm font-mono font-medium">
-                        {arg.argument}
-                      </code>
-                      <Badge
-                        variant={categoryVariant(arg.category)}
-                        className="text-xs"
-                      >
-                        {arg.category}
-                      </Badge>
-                    </div>
+            {error && (
+              <Card className="border-destructive">
+                <CardContent className="pt-4">
+                  <p className="text-sm text-destructive">{error}</p>
+                </CardContent>
+              </Card>
+            )}
+
+            {explanation && (
+              <div className="space-y-4">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm">Summary</CardTitle>
                   </CardHeader>
-                  <CardContent className="pb-3">
-                    <CardDescription className="text-sm">
-                      {arg.description}
-                    </CardDescription>
+                  <CardContent>
+                    <p className="text-sm">{explanation.summary}</p>
                   </CardContent>
                 </Card>
-              ))}
-            </div>
-          </ScrollArea>
-        </div>
-      )}
+
+                <ScrollArea className="h-[calc(100vh-30rem)]">
+                  <div className="space-y-2 pr-4">
+                    {explanation.arguments.map((arg, i) => (
+                      <Card key={i}>
+                        <CardHeader className="py-3 pb-1">
+                          <div className="flex items-center gap-2">
+                            <code className="text-sm font-mono font-medium">
+                              {arg.argument}
+                            </code>
+                            <Badge
+                              variant={categoryVariant(arg.category)}
+                              className="text-xs"
+                            >
+                              {arg.category}
+                            </Badge>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="pb-3">
+                          <CardDescription className="text-sm">
+                            {arg.description}
+                          </CardDescription>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="scrubber">
+          <LogScrubber />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

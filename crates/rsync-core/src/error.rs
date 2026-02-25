@@ -26,6 +26,9 @@ pub enum AppError {
 
     #[error("Scheduler error: {0}")]
     SchedulerError(String),
+
+    #[error("IO error: {0}")]
+    IoError(#[from] std::io::Error),
 }
 
 impl Serialize for AppError {

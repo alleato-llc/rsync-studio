@@ -20,3 +20,5 @@ mod sqlite_settings_repository_tests;
 mod job_service_integration_tests;
 #[cfg(test)]
 mod statistics_service_tests;
+#[cfg(test)]
+mod log_scrubber_tests;
