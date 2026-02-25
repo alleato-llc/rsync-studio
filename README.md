@@ -45,13 +45,13 @@ The TUI has no Node.js or Tauri dependencies — just Rust and rsync.
 
 ```bash
 # Build
-cargo build -p rsync-tui --release
+cargo build -p rsync-commander --release
 
 # Launch interactive TUI
-./target/release/rsync-tui
+./target/release/rsync-commander
 
 # Or run directly with cargo
-cargo run -p rsync-tui
+cargo run -p rsync-commander
 ```
 
 See [Terminal UI](#terminal-ui-1) below for full usage, or [docs/setup.md](docs/setup.md) for detailed setup instructions.
@@ -64,7 +64,7 @@ Rsync Studio is a Cargo workspace with three crates:
 |-------|------|
 | `rsync-core` | Shared library — models, traits, services, job execution, SQLite persistence |
 | `rsync-gui` (`src-tauri/`) | Tauri desktop app — IPC commands, state management, system tray |
-| `rsync-tui` | Terminal UI — ratatui + crossterm, runs on headless servers |
+| `rsync-commander` | Terminal UI — ratatui + crossterm, runs on headless servers |
 
 Both frontends share the same `rsync-core` library, database, and job executor. The `ExecutionEventHandler` trait allows the GUI to emit Tauri events while the TUI uses mpsc channels — same execution logic, different event delivery.
 
@@ -77,11 +77,11 @@ The TUI provides the same feature set as the desktop GUI but runs entirely in th
 ### Usage
 
 ```bash
-rsync-tui                          # Launch interactive TUI
-rsync-tui list                     # List all jobs (non-interactive)
-rsync-tui run <job-id>             # Run a single job (non-interactive, for cron/systemd)
-rsync-tui --db-path <path>         # Custom database location
-rsync-tui --log-dir <path>         # Custom log directory
+rsync-commander                          # Launch interactive TUI
+rsync-commander list                     # List all jobs (non-interactive)
+rsync-commander run <job-id>             # Run a single job (non-interactive, for cron/systemd)
+rsync-commander --db-path <path>         # Custom database location
+rsync-commander --log-dir <path>         # Custom log directory
 ```
 
 ### Pages
@@ -123,12 +123,12 @@ The `run` subcommand executes a single job and exits, making it suitable for cro
 
 ```bash
 # In a crontab:
-0 2 * * * /usr/local/bin/rsync-tui run 550e8400-e29b-41d4-a716-446655440000
+0 2 * * * /usr/local/bin/rsync-commander run 550e8400-e29b-41d4-a716-446655440000
 
 # Or with a systemd timer
 [Service]
 Type=oneshot
-ExecStart=/usr/local/bin/rsync-tui run 550e8400-e29b-41d4-a716-446655440000
+ExecStart=/usr/local/bin/rsync-commander run 550e8400-e29b-41d4-a716-446655440000
 ```
 
 ### Shared Database
@@ -161,7 +161,7 @@ npm run tauri dev
 npm run tauri build
 
 # Run the TUI
-cargo run -p rsync-tui
+cargo run -p rsync-commander
 ```
 
 ## Tech Stack

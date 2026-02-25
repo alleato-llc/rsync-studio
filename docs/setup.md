@@ -67,34 +67,34 @@ The TUI requires only Rust and rsync — no Node.js, no Tauri, no display server
 
 ```bash
 # Build
-cargo build -p rsync-tui --release
+cargo build -p rsync-commander --release
 
 # Launch interactive TUI
-./target/release/rsync-tui
+./target/release/rsync-commander
 
 # List configured jobs
-./target/release/rsync-tui list
+./target/release/rsync-commander list
 
 # Run a single job non-interactively (for cron/systemd)
-./target/release/rsync-tui run <job-id>
+./target/release/rsync-commander run <job-id>
 
 # Use a custom database location
-./target/release/rsync-tui --db-path /path/to/rsync-studio.db
+./target/release/rsync-commander --db-path /path/to/rsync-studio.db
 
 # Use a custom log directory
-./target/release/rsync-tui --log-dir /var/log/rsync-studio
+./target/release/rsync-commander --log-dir /var/log/rsync-studio
 ```
 
 The TUI shares the same SQLite database as the GUI, so jobs created in one are visible in the other.
 
-**Headless server deployment**: Copy just the `rsync-tui` binary to the server. No other files are needed — the database and log directory are created automatically on first run at `~/.local/share/rsync-studio/`.
+**Headless server deployment**: Copy just the `rsync-commander` binary to the server. No other files are needed — the database and log directory are created automatically on first run at `~/.local/share/rsync-studio/`.
 
 ## Project Structure Quick Reference
 
 ```
 rsync-studio/
 ├── crates/rsync-core/     # Shared Rust library (all domain logic)
-├── crates/rsync-tui/      # Terminal UI (ratatui + crossterm)
+├── crates/rsync-commander/ # Terminal UI (ratatui + crossterm)
 ├── src-tauri/             # Tauri GUI shell (thin wrapper over rsync-core)
 ├── src/                   # React + TypeScript frontend
 ├── Cargo.toml             # Workspace configuration
@@ -115,8 +115,8 @@ rsync-studio/
 | TypeScript check | `npx tsc --noEmit` |
 | Dev mode (GUI) | `npm run tauri dev` |
 | Production build (GUI) | `npm run tauri build` |
-| Build TUI | `cargo build -p rsync-tui --release` |
-| Run TUI | `cargo run -p rsync-tui` |
+| Build TUI | `cargo build -p rsync-commander --release` |
+| Run TUI | `cargo run -p rsync-commander` |
 | Add shadcn component | `npx shadcn@latest add <component>` |
 | Frontend only (no Rust) | `npm run dev` |
 

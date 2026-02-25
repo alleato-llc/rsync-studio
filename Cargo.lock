@@ -3436,6 +3436,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "rsync-commander"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "clap",
+ "crossterm",
+ "dirs 5.0.1",
+ "env_logger",
+ "log",
+ "ratatui",
+ "rsync-core",
+ "serde_json",
+ "uuid",
+]
+
+[[package]]
 name = "rsync-core"
 version = "0.1.0"
 dependencies = [
@@ -3467,22 +3483,6 @@ dependencies = [
  "tauri-plugin-dialog",
  "tauri-plugin-log",
  "tauri-plugin-shell",
- "uuid",
-]
-
-[[package]]
-name = "rsync-tui"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "clap",
- "crossterm",
- "dirs 5.0.1",
- "env_logger",
- "log",
- "ratatui",
- "rsync-core",
- "serde_json",
  "uuid",
 ]
 

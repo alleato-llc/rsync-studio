@@ -38,7 +38,7 @@ use event::{AppEvent, EventLoop};
 use handler::TuiEventHandler;
 
 #[derive(Parser)]
-#[command(name = "rsync-tui", about = "Terminal UI for Rsync Studio")]
+#[command(name = "rsync-commander", about = "Terminal UI for Rsync Studio")]
 struct Cli {
     /// Custom database path
     #[arg(long)]

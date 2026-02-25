@@ -6,7 +6,7 @@ Rsync Studio follows a layered architecture with clear separation between domain
 
 ```
 ┌──────────────────────────────┐  ┌──────────────────────────────┐
-│  React Frontend (src/)       │  │  Terminal UI (rsync-tui/)    │
+│  React Frontend (src/)       │  │  Terminal UI (rsync-commander/) │
 │  TypeScript + shadcn/ui      │  │  ratatui + crossterm + clap  │
 │  Pages, Components, Hooks    │  │  Pages, Keybindings, Themes  │
 ├──────────────────────────────┤  ├──────────────────────────────┤
@@ -89,12 +89,12 @@ src-tauri/src/
 └── state.rs      # AppState struct (Database + Arc<JobExecutor>)
 ```
 
-### `rsync-tui` (binary crate)
+### `rsync-commander` (binary crate)
 
 Terminal UI for headless servers. Uses ratatui for rendering and crossterm for terminal I/O. Shares the same database and services as the GUI.
 
 ```
-crates/rsync-tui/src/
+crates/rsync-commander/src/
 ├── main.rs       # Entry point, CLI parsing (clap), terminal setup/teardown
 ├── app.rs        # App state machine, keybinding dispatch, page state
 ├── event.rs      # Event loop: multiplexes terminal events + job events
@@ -184,7 +184,7 @@ pub trait ExecutionEventHandler: Send + Sync {
 The `SchedulerBackend` trait allows different scheduling strategies:
 
 - **`InProcessScheduler`** — background thread with configurable check interval (used by both GUI and TUI)
-- **External schedulers** — the `rsync-tui run <job-id>` subcommand enables crontab or systemd timer integration without an in-process scheduler
+- **External schedulers** — the `rsync-commander run <job-id>` subcommand enables crontab or systemd timer integration without an in-process scheduler
 
 ### Trait-based Dependency Injection
 
@@ -223,7 +223,7 @@ Key Event → App::handle_key() → JobExecutor/JobService → Repository → SQ
     → terminal redraw
 ```
 
-### Headless (`rsync-tui run`)
+### Headless (`rsync-commander run`)
 
 ```
 CLI args → JobService::get_job() → JobExecutor::execute() → mpsc channel

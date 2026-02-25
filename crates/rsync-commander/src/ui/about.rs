@@ -16,7 +16,7 @@ pub fn draw_about(f: &mut Frame, area: Rect) {
     let lines = vec![
         Line::from(""),
         Line::from(Span::styled(
-            "  Rsync Studio",
+            "  Rsync Commander",
             Style::default()
                 .fg(Color::Cyan)
                 .add_modifier(Modifier::BOLD),
