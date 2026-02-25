@@ -1,11 +1,8 @@
 use std::sync::Arc;
-use std::time::Duration;
 
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem, Submenu};
 use tauri::tray::TrayIconBuilder;
 use tauri::{Emitter, Manager, WindowEvent};
-
-use chrono::Utc;
 
 use rsync_core::database::sqlite::Database;
 use rsync_core::repository::sqlite::invocation::SqliteInvocationRepository;
@@ -13,10 +10,11 @@ use rsync_core::repository::sqlite::job::SqliteJobRepository;
 use rsync_core::repository::sqlite::settings::SqliteSettingsRepository;
 use rsync_core::repository::sqlite::snapshot::SqliteSnapshotRepository;
 use rsync_core::repository::sqlite::statistics::SqliteStatisticsRepository;
-use rsync_core::models::backup::InvocationTrigger;
-use rsync_core::services::history_retention;
+use rsync_core::services::job_executor::JobExecutor;
 use rsync_core::services::job_service::JobService;
-use rsync_core::services::scheduler;
+use rsync_core::services::retention_runner;
+use rsync_core::services::running_jobs::RunningJobs;
+use rsync_core::services::scheduler_backend::{InProcessScheduler, SchedulerBackend, SchedulerConfig};
 use rsync_core::services::settings_service::SettingsService;
 use rsync_core::services::statistics_service::StatisticsService;
 
@@ -24,13 +22,8 @@ mod commands;
 mod execution;
 mod state;
 
+use execution::TauriEventHandler;
 use state::AppState;
-
-/// How often the scheduler checks for due jobs (in seconds).
-const SCHEDULER_CHECK_INTERVAL_SECS: u64 = 300; // 5 minutes
-
-/// How many scheduler cycles between retention checks (~1 hour at 5min intervals).
-const RETENTION_CHECK_EVERY_N_CYCLES: u64 = 12;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -124,18 +117,26 @@ pub fn run() {
             let job_service = Arc::new(JobService::new(jobs, invocations, snapshots));
             let statistics_service = Arc::new(StatisticsService::new(statistics_repo));
             let settings_service = Arc::new(SettingsService::new(settings_repo));
+            let running_jobs = Arc::new(RunningJobs::new());
+
+            let job_executor = Arc::new(JobExecutor::new(
+                Arc::clone(&job_service),
+                Arc::clone(&statistics_service),
+                Arc::clone(&settings_service),
+                Arc::clone(&running_jobs),
+                default_log_dir,
+            ));
 
             app.manage(AppState {
                 _database: database,
-                job_service,
-                statistics_service,
-                settings_service,
-                running_jobs: execution::RunningJobs::new(),
-                default_log_dir,
+                job_service: Arc::clone(&job_service),
+                statistics_service: Arc::clone(&statistics_service),
+                settings_service: Arc::clone(&settings_service),
+                job_executor: Arc::clone(&job_executor),
             });
 
             // --- Run history retention on startup ---
-            run_history_retention(&app.handle());
+            retention_runner::run_history_retention(&job_service, &settings_service);
 
             // --- System tray ---
             setup_tray(app)?;
@@ -155,7 +156,30 @@ pub fn run() {
             });
 
             // --- Scheduler background thread ---
-            spawn_scheduler(app.handle().clone());
+            let scheduler_app_handle = app.handle().clone();
+            let handler_factory: Arc<dyn Fn() -> Arc<dyn rsync_core::services::execution_handler::ExecutionEventHandler> + Send + Sync> =
+                Arc::new(move || {
+                    Arc::new(TauriEventHandler::new(scheduler_app_handle.clone()))
+                });
+
+            let scheduler_app_handle2 = app.handle().clone();
+            let on_job_scheduled: Arc<dyn Fn(&uuid::Uuid) + Send + Sync> =
+                Arc::new(move |job_id| {
+                    let _ = scheduler_app_handle2.emit("job-scheduled", &job_id.to_string());
+                });
+
+            let in_process_scheduler = InProcessScheduler::new(
+                SchedulerConfig::default(),
+                Arc::clone(&job_executor),
+                Arc::clone(&job_service),
+                Arc::clone(&settings_service),
+                handler_factory,
+            )
+            .with_on_job_scheduled(on_job_scheduled);
+
+            // Start the scheduler — handle is intentionally leaked to keep the thread alive
+            let _scheduler_handle = in_process_scheduler.start();
+            std::mem::forget(_scheduler_handle);
 
             Ok(())
         })
@@ -253,128 +277,4 @@ fn setup_tray(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
         .build(app)?;
 
     Ok(())
-}
-
-fn run_history_retention(app_handle: &tauri::AppHandle) {
-    let state: tauri::State<'_, AppState> = app_handle.state();
-    let settings_service = Arc::clone(&state.settings_service);
-    let job_service = Arc::clone(&state.job_service);
-
-    let retention = match settings_service.get_retention_settings() {
-        Ok(r) => r,
-        Err(e) => {
-            log::error!("Retention: failed to load settings: {}", e);
-            return;
-        }
-    };
-
-    let config = history_retention::HistoryRetentionConfig {
-        max_age_days: retention.max_log_age_days,
-        max_per_job: retention.max_history_per_job,
-    };
-
-    let all_invocations = match job_service.list_all_invocations() {
-        Ok(inv) => inv,
-        Err(e) => {
-            log::error!("Retention: failed to list invocations: {}", e);
-            return;
-        }
-    };
-
-    let to_prune = history_retention::compute_invocations_to_prune(&all_invocations, &config);
-
-    for (inv_id, log_path) in &to_prune {
-        // Delete log file if it exists
-        if let Some(path) = log_path {
-            if std::path::Path::new(path).exists() {
-                if let Err(e) = std::fs::remove_file(path) {
-                    log::error!("Retention: failed to delete log file {}: {}", path, e);
-                }
-            }
-        }
-        // Delete invocation from DB
-        if let Err(e) = job_service.delete_invocation(inv_id) {
-            log::error!("Retention: failed to delete invocation {}: {}", inv_id, e);
-        }
-    }
-
-    if !to_prune.is_empty() {
-        log::info!("Retention: pruned {} invocations", to_prune.len());
-    }
-}
-
-fn spawn_scheduler(app_handle: tauri::AppHandle) {
-    std::thread::spawn(move || {
-        let mut cycle_count: u64 = 0;
-        loop {
-            std::thread::sleep(Duration::from_secs(SCHEDULER_CHECK_INTERVAL_SECS));
-            cycle_count += 1;
-
-            let state: tauri::State<'_, AppState> = app_handle.state();
-            let job_service = Arc::clone(&state.job_service);
-            let statistics_service = Arc::clone(&state.statistics_service);
-
-            // Periodically run history retention
-            if cycle_count % RETENTION_CHECK_EVERY_N_CYCLES == 0 {
-                run_history_retention(&app_handle);
-            }
-
-            let jobs = match job_service.list_jobs() {
-                Ok(j) => j,
-                Err(e) => {
-                    log::error!("Scheduler: failed to list jobs: {}", e);
-                    continue;
-                }
-            };
-
-            let now = Utc::now();
-
-            for job in &jobs {
-                // Skip disabled jobs or jobs without a schedule
-                if !job.enabled {
-                    continue;
-                }
-                let schedule = match &job.schedule {
-                    Some(s) if s.enabled => s,
-                    _ => continue,
-                };
-
-                // Skip jobs that are currently running
-                if state.running_jobs.is_running(&job.id) {
-                    continue;
-                }
-
-                // Determine the last run time from history
-                let last_run = job_service
-                    .get_job_history(&job.id, 1)
-                    .ok()
-                    .and_then(|h| h.first().map(|inv| inv.started_at));
-
-                if scheduler::is_job_due(schedule, last_run, now) {
-                    log::info!(
-                        "Scheduler: job '{}' ({}) is due, executing",
-                        job.name,
-                        job.id
-                    );
-                    let _ = app_handle.emit("job-scheduled", &job.id.to_string());
-
-                    if let Err(e) = execution::run_job_internal(
-                        job,
-                        InvocationTrigger::Scheduled,
-                        &state.running_jobs,
-                        Arc::clone(&job_service),
-                        Arc::clone(&statistics_service),
-                        app_handle.clone(),
-                    ) {
-                        log::error!(
-                            "Scheduler: failed to execute job '{}' ({}): {}",
-                            job.name,
-                            job.id,
-                            e
-                        );
-                    }
-                }
-            }
-        }
-    });
 }

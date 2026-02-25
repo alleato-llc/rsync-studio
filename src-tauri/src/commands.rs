@@ -18,7 +18,7 @@ use rsync_core::services::log_scrubber::{self, ScrubApplyResult, ScrubScanResult
 use rsync_core::services::preflight;
 use rsync_core::services::settings_service::RetentionSettings;
 
-use crate::execution::run_job_internal;
+use crate::execution::TauriEventHandler;
 use crate::state::AppState;
 
 #[tauri::command]
@@ -91,14 +91,11 @@ pub fn execute_job(
         .get_job(&job_uuid)
         .map_err(|e| e.to_string())?;
 
-    run_job_internal(
-        &job,
-        InvocationTrigger::Manual,
-        &state.running_jobs,
-        Arc::clone(&state.job_service),
-        Arc::clone(&state.statistics_service),
-        app,
-    )
+    let handler = Arc::new(TauriEventHandler::new(app));
+    state
+        .job_executor
+        .execute(&job, InvocationTrigger::Manual, handler)
+        .map(|id| id.to_string())
 }
 
 #[tauri::command]
@@ -118,14 +115,11 @@ pub fn execute_job_dry_run(
 
     job.options.dry_run = true;
 
-    run_job_internal(
-        &job,
-        InvocationTrigger::Manual,
-        &state.running_jobs,
-        Arc::clone(&state.job_service),
-        Arc::clone(&state.statistics_service),
-        app,
-    )
+    let handler = Arc::new(TauriEventHandler::new(app));
+    state
+        .job_executor
+        .execute(&job, InvocationTrigger::Manual, handler)
+        .map(|id| id.to_string())
 }
 
 #[tauri::command]
@@ -133,7 +127,7 @@ pub fn cancel_job(job_id: String, state: State<'_, AppState>) -> Result<(), Stri
     let uuid = job_id
         .parse::<Uuid>()
         .map_err(|e| format!("Invalid job ID: {e}"))?;
-    if state.running_jobs.cancel(&uuid) {
+    if state.job_executor.cancel(&uuid) {
         Ok(())
     } else {
         Err("Job is not running".to_string())
@@ -143,7 +137,7 @@ pub fn cancel_job(job_id: String, state: State<'_, AppState>) -> Result<(), Stri
 #[tauri::command]
 pub fn get_running_jobs(state: State<'_, AppState>) -> Result<Vec<String>, String> {
     Ok(state
-        .running_jobs
+        .job_executor
         .running_job_ids()
         .iter()
         .map(|id| id.to_string())
@@ -296,7 +290,7 @@ pub fn get_log_directory(state: State<'_, AppState>) -> Result<String, String> {
     state
         .settings_service
         .get_log_directory()
-        .map(|opt| opt.unwrap_or_else(|| state.default_log_dir.clone()))
+        .map(|opt| opt.unwrap_or_else(|| state.job_executor.default_log_dir().to_string()))
         .map_err(|e| e.to_string())
 }
 
@@ -423,7 +417,7 @@ pub fn scrub_scan_logs(
     let log_dir = state
         .settings_service
         .get_log_directory()
-        .map(|opt| opt.unwrap_or_else(|| state.default_log_dir.clone()))
+        .map(|opt| opt.unwrap_or_else(|| state.job_executor.default_log_dir().to_string()))
         .map_err(|e| e.to_string())?;
 
     log_scrubber::scrub_scan(&log_dir, &pattern).map_err(|e| e.to_string())

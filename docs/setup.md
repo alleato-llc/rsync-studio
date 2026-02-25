@@ -41,7 +41,7 @@ npx tsc --noEmit
 
 ## Running the App
 
-### Development Mode
+### Desktop GUI (Development Mode)
 
 ```bash
 # Start Tauri dev mode (Vite frontend + Rust backend with hot reload)
@@ -53,7 +53,7 @@ This starts:
 - Tauri window loading from the dev server
 - Rust backend with automatic rebuild on changes to `src-tauri/`
 
-### Production Build
+### Desktop GUI (Production Build)
 
 ```bash
 npm run tauri build
@@ -61,12 +61,40 @@ npm run tauri build
 
 Produces platform-specific installers in `src-tauri/target/release/bundle/`.
 
+### Terminal UI
+
+The TUI requires only Rust and rsync — no Node.js, no Tauri, no display server.
+
+```bash
+# Build
+cargo build -p rsync-tui --release
+
+# Launch interactive TUI
+./target/release/rsync-tui
+
+# List configured jobs
+./target/release/rsync-tui list
+
+# Run a single job non-interactively (for cron/systemd)
+./target/release/rsync-tui run <job-id>
+
+# Use a custom database location
+./target/release/rsync-tui --db-path /path/to/rsync-studio.db
+
+# Use a custom log directory
+./target/release/rsync-tui --log-dir /var/log/rsync-studio
+```
+
+The TUI shares the same SQLite database as the GUI, so jobs created in one are visible in the other.
+
+**Headless server deployment**: Copy just the `rsync-tui` binary to the server. No other files are needed — the database and log directory are created automatically on first run at `~/.local/share/rsync-studio/`.
+
 ## Project Structure Quick Reference
 
 ```
 rsync-studio/
 ├── crates/rsync-core/     # Shared Rust library (all domain logic)
-├── crates/rsync-tui/      # Future TUI (stub)
+├── crates/rsync-tui/      # Terminal UI (ratatui + crossterm)
 ├── src-tauri/             # Tauri GUI shell (thin wrapper over rsync-core)
 ├── src/                   # React + TypeScript frontend
 ├── Cargo.toml             # Workspace configuration
@@ -85,8 +113,10 @@ rsync-studio/
 | Build Rust workspace | `cargo build --workspace` |
 | Run Rust tests | `cargo test -p rsync-core` |
 | TypeScript check | `npx tsc --noEmit` |
-| Dev mode (full app) | `npm run tauri dev` |
-| Production build | `npm run tauri build` |
+| Dev mode (GUI) | `npm run tauri dev` |
+| Production build (GUI) | `npm run tauri build` |
+| Build TUI | `cargo build -p rsync-tui --release` |
+| Run TUI | `cargo run -p rsync-tui` |
 | Add shadcn component | `npx shadcn@latest add <component>` |
 | Frontend only (no Rust) | `npm run dev` |
 

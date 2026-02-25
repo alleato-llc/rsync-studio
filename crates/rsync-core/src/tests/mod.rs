@@ -22,3 +22,7 @@ mod job_service_integration_tests;
 mod statistics_service_tests;
 #[cfg(test)]
 mod log_scrubber_tests;
+#[cfg(test)]
+mod running_jobs_tests;
+#[cfg(test)]
+mod retention_runner_tests;

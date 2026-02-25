@@ -5,24 +5,26 @@
 Rsync Studio follows a layered architecture with clear separation between domain logic, persistence, and presentation. The Cargo workspace contains three crates, and the frontend is a React SPA that communicates with the Rust backend via Tauri's IPC mechanism.
 
 ```
-┌──────────────────────────────────────────────────────┐
-│  React Frontend (src/)                               │
-│  TypeScript + shadcn/ui + Tailwind                   │
-│  Pages, Components, Hooks, Typed Invoke Wrappers     │
-├──────────────────────────────────────────────────────┤
-│  Tauri IPC Layer (src-tauri/)                        │
-│  Commands → State → Service calls                    │
-├──────────────────────────────────────────────────────┤
-│  rsync-core Library (crates/rsync-core/)             │
-│  Models, Traits, Services, Implementations, Tests    │
-└──────────────────────────────────────────────────────┘
+┌──────────────────────────────┐  ┌──────────────────────────────┐
+│  React Frontend (src/)       │  │  Terminal UI (rsync-tui/)    │
+│  TypeScript + shadcn/ui      │  │  ratatui + crossterm + clap  │
+│  Pages, Components, Hooks    │  │  Pages, Keybindings, Themes  │
+├──────────────────────────────┤  ├──────────────────────────────┤
+│  Tauri IPC (src-tauri/)      │  │  TuiEventHandler (mpsc)      │
+│  TauriEventHandler (emit)    │  │  Direct service calls        │
+├──────────────────────────────┴──┴──────────────────────────────┤
+│  rsync-core Library (crates/rsync-core/)                       │
+│  Models, Traits, Services, JobExecutor, Scheduler, Tests       │
+└────────────────────────────────────────────────────────────────┘
 ```
+
+Both frontends depend on `rsync-core` and share the same database. The `ExecutionEventHandler` trait is the key abstraction: the GUI implements it with Tauri's `AppHandle.emit()`, and the TUI implements it with `mpsc::Sender`.
 
 ## Crate Structure
 
 ### `rsync-core` (library crate)
 
-The shared domain library. Contains all business logic, data models, and abstractions. Both the GUI and future TUI depend on this crate.
+The shared domain library. Contains all business logic, data models, and abstractions. Both the GUI and TUI depend on this crate.
 
 ```
 crates/rsync-core/src/
@@ -34,6 +36,7 @@ crates/rsync-core/src/
 │   ├── log.rs              # LogEntry, LogLevel
 │   ├── progress.rs         # ProgressUpdate, LogLine, JobStatusEvent
 │   ├── schedule.rs         # ScheduleConfig, ScheduleType
+│   ├── statistics.rs       # RunStatistic, AggregatedStats
 │   └── validation.rs       # PreflightResult, ValidationCheck
 ├── traits/                 # Abstractions for DI
 │   ├── rsync_client.rs     # RsyncClient trait
@@ -42,16 +45,31 @@ crates/rsync-core/src/
 │   ├── invocation_repository.rs
 │   └── snapshot_repository.rs
 ├── services/               # Business logic
-│   ├── command_builder.rs  # build_rsync_args() — shared by Rust + TypeScript
-│   └── job_service.rs      # JobService (CRUD, history, snapshots)
+│   ├── command_builder.rs       # build_rsync_args()
+│   ├── command_parser.rs        # parse_rsync_command()
+│   ├── command_explainer.rs     # explain_command()
+│   ├── execution_handler.rs     # ExecutionEventHandler trait
+│   ├── job_executor.rs          # JobExecutor (execution orchestration)
+│   ├── job_runner.rs            # Spawns rsync subprocess, streams events
+│   ├── job_service.rs           # JobService (CRUD, history, snapshots)
+│   ├── running_jobs.rs          # RunningJobs (thread-safe child process map)
+│   ├── scheduler.rs             # is_job_due(), next_run_time()
+│   ├── scheduler_backend.rs     # SchedulerBackend trait + InProcessScheduler
+│   ├── retention.rs             # compute_snapshots_to_delete()
+│   ├── retention_runner.rs      # run_history_retention()
+│   ├── history_retention.rs     # compute_invocations_to_prune()
+│   ├── statistics_service.rs    # Record/aggregate/export run statistics
+│   ├── settings_service.rs      # Typed get/set for app settings
+│   ├── export_import.rs         # Job export/import as JSON
+│   ├── log_scrubber.rs          # Log file search/redact
+│   ├── preflight.rs             # Pre-execution validation checks
+│   └── progress_parser.rs       # Parse rsync progress output
 ├── implementations/        # Production implementations
-│   ├── database.rs         # SQLite connection management
+│   ├── database.rs              # SQLite connection management
 │   ├── process_rsync_client.rs  # Real rsync subprocess
 │   ├── real_file_system.rs      # Real filesystem operations
-│   ├── sqlite_job_repository.rs
-│   ├── sqlite_invocation_repository.rs
-│   └── sqlite_snapshot_repository.rs
-└── tests/                  # Test infrastructure + test suites
+│   └── sqlite_*.rs              # SQLite repository implementations
+└── tests/                  # Test infrastructure + test suites (191 tests)
     ├── test_file_system.rs      # In-memory FS with inode tracking
     ├── test_rsync_client.rs     # Simulated rsync behavior
     ├── test_helpers.rs          # Shared test utilities
@@ -65,14 +83,38 @@ The Tauri application shell. Intentionally thin — delegates all logic to `rsyn
 ```
 src-tauri/src/
 ├── main.rs       # Entry point
-├── lib.rs        # Tauri Builder setup, database init, state wiring
-├── commands.rs   # 6 Tauri IPC command handlers
-└── state.rs      # AppState struct (Database + Arc<JobService>)
+├── lib.rs        # Tauri Builder setup, database init, scheduler, tray
+├── commands.rs   # Tauri IPC command handlers
+├── execution.rs  # TauriEventHandler (implements ExecutionEventHandler)
+└── state.rs      # AppState struct (Database + Arc<JobExecutor>)
 ```
 
-### `rsync-tui` (binary crate — stub)
+### `rsync-tui` (binary crate)
 
-Future terminal UI. Currently a placeholder that depends on `rsync-core`.
+Terminal UI for headless servers. Uses ratatui for rendering and crossterm for terminal I/O. Shares the same database and services as the GUI.
+
+```
+crates/rsync-tui/src/
+├── main.rs       # Entry point, CLI parsing (clap), terminal setup/teardown
+├── app.rs        # App state machine, keybinding dispatch, page state
+├── event.rs      # Event loop: multiplexes terminal events + job events
+├── handler.rs    # TuiEventHandler (implements ExecutionEventHandler via mpsc)
+├── theme.rs      # 4 color themes (Default, Dark, Solarized, Nord)
+└── ui/
+    ├── mod.rs         # Top-level draw(), layout helpers
+    ├── tabs.rs        # Tab bar widget (1:Jobs 2:History ...)
+    ├── status_bar.rs  # Bottom bar (running count, help hints)
+    ├── popup.rs       # Modal dialogs (help, confirm, error)
+    ├── text_input.rs  # Reusable text input with cursor + Ctrl shortcuts
+    ├── jobs.rs        # Jobs table with search
+    ├── job_form.rs    # Job create/edit form
+    ├── job_output.rs  # Live output viewer with follow mode
+    ├── history.rs     # Invocation history + log viewer
+    ├── statistics.rs  # Aggregated + per-job stats dashboard
+    ├── tools.rs       # Command explainer + log scrubber
+    ├── settings.rs    # Settings editor
+    └── about.rs       # Version info
+```
 
 ## Frontend Architecture
 
@@ -119,6 +161,31 @@ src/
 
 ## Key Design Decisions
 
+### ExecutionEventHandler — Frontend Abstraction
+
+Job execution orchestration (~300 lines covering log writing, statistics recording, snapshot management, and retention) lives in `rsync-core`'s `JobExecutor`. The `ExecutionEventHandler` trait decouples this logic from any specific frontend:
+
+```rust
+pub trait ExecutionEventHandler: Send + Sync {
+    fn on_log_line(&self, log_line: LogLine);
+    fn on_progress(&self, progress: &ProgressUpdate);
+    fn on_status_change(&self, status: JobStatusEvent);
+}
+```
+
+| Frontend | Implementation | Event Delivery |
+|----------|---------------|----------------|
+| GUI | `TauriEventHandler` | `AppHandle.emit()` → JavaScript event listeners |
+| TUI | `TuiEventHandler` | `mpsc::Sender` → event loop `try_recv()` |
+| CLI (`run`) | `TuiEventHandler` | `mpsc::Sender` → blocking `recv()` loop |
+
+### Pluggable Scheduler
+
+The `SchedulerBackend` trait allows different scheduling strategies:
+
+- **`InProcessScheduler`** — background thread with configurable check interval (used by both GUI and TUI)
+- **External schedulers** — the `rsync-tui run <job-id>` subcommand enables crontab or systemd timer integration without an in-process scheduler
+
 ### Trait-based Dependency Injection
 
 All external dependencies (rsync process, filesystem, database) are abstracted behind traits. This enables:
@@ -140,10 +207,27 @@ Page-level navigation uses React state (`useState<View>`) inside `JobsPage` rath
 
 ## Data Flow
 
+### GUI
+
 ```
 User Action → React Component → useJobs hook → tauri.ts invoke wrapper
-    → Tauri IPC → commands.rs → JobService → Repository trait → SQLite
+    → Tauri IPC → commands.rs → JobExecutor/JobService → Repository → SQLite
     → Result<T, AppError> → String error for IPC → TypeScript Promise
+```
+
+### TUI
+
+```
+Key Event → App::handle_key() → JobExecutor/JobService → Repository → SQLite
+    → ExecutionEventHandler → mpsc channel → EventLoop → App::handle_job_event()
+    → terminal redraw
+```
+
+### Headless (`rsync-tui run`)
+
+```
+CLI args → JobService::get_job() → JobExecutor::execute() → mpsc channel
+    → blocking recv() loop → stdout/stderr → exit code
 ```
 
 ## Database
