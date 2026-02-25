@@ -41,6 +41,7 @@ export interface RsyncOptions {
   include_patterns: string[];
   bandwidth_limit: number | null;
   custom_args: string[];
+  size_only: boolean;
 }
 
 export interface JobDefinition {

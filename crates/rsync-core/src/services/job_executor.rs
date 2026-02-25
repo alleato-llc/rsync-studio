@@ -14,6 +14,7 @@ use crate::services::command_builder::build_rsync_args;
 use crate::services::execution_handler::ExecutionEventHandler;
 use crate::services::job_runner::{run_job, ExecutionEvent};
 use crate::services::job_service::JobService;
+use crate::services::progress_parser::parse_summary_line;
 use crate::services::retention;
 use crate::services::running_jobs::RunningJobs;
 use crate::services::settings_service::SettingsService;
@@ -255,6 +256,7 @@ impl JobExecutor {
             let mut last_files: u64 = 0;
             let mut last_total: u64 = 0;
             let mut last_speedup: Option<f64> = None;
+            let mut summary_sent_bytes: Option<u64> = None;
 
             // Open log file for writing
             let mut log_writer = std::fs::File::create(&log_path_for_thread)
@@ -266,6 +268,11 @@ impl JobExecutor {
             while let Ok(event) = rx.recv() {
                 match event {
                     ExecutionEvent::StdoutLine(line) => {
+                        // Parse transfer summary ("sent X bytes  received Y bytes")
+                        if let Some(summary) = parse_summary_line(&line) {
+                            summary_sent_bytes = Some(summary.sent_bytes);
+                        }
+
                         // Parse speedup from rsync summary line
                         if let Some(ref re) = speedup_re {
                             if let Some(caps) = re.captures(&line) {
@@ -361,13 +368,16 @@ impl JobExecutor {
             };
 
             // Update invocation record
+            // Use total sent bytes from rsync summary when available (accurate total),
+            // falling back to the last per-file progress value.
+            let final_bytes = summary_sent_bytes.unwrap_or(last_bytes);
             let completed_invocation = BackupInvocation {
                 id: invocation_id,
                 job_id: job_uuid,
                 started_at: invocation_started_at,
                 finished_at: Some(Utc::now()),
                 status: status.clone(),
-                bytes_transferred: last_bytes,
+                bytes_transferred: final_bytes,
                 files_transferred: last_files,
                 total_files: last_total,
                 snapshot_path: snapshot_path_for_record.clone(),

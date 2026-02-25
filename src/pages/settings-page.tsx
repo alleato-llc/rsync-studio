@@ -29,6 +29,9 @@ export function SettingsPage() {
   // Trailing slash state
   const [autoTrailingSlash, setAutoTrailingSlashState] = useState(true);
 
+  // NAS auto-detect state
+  const [nasAutoDetect, setNasAutoDetectState] = useState(true);
+
   // Dry mode state
   const [dryModeItemize, setDryModeItemize] = useState(false);
   const [dryModeChecksum, setDryModeChecksum] = useState(false);
@@ -52,6 +55,7 @@ export function SettingsPage() {
 
   useEffect(() => {
     api.getAutoTrailingSlash().then(setAutoTrailingSlashState).catch(console.error);
+    api.getNasAutoDetect().then(setNasAutoDetectState).catch(console.error);
     api
       .getDryModeSettings()
       .then((s) => {
@@ -265,6 +269,37 @@ export function SettingsPage() {
               onCheckedChange={async (checked) => {
                 setAutoTrailingSlashState(checked);
                 await api.setAutoTrailingSlash(checked);
+              }}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* NAS Auto-Detection */}
+      <Card>
+        <CardHeader>
+          <CardTitle>NAS / Network Filesystem</CardTitle>
+          <CardDescription>
+            Automatically detect when a job source or destination is on a
+            network filesystem (SMB, NFS, AFP) and suggest compatibility flags
+            that prevent unnecessary re-transfers.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="nas-auto-detect">Auto-detect network filesystems</Label>
+              <p className="text-xs text-muted-foreground">
+                When enabled, the job form will check paths and auto-enable
+                --size-only for network mounts.
+              </p>
+            </div>
+            <Switch
+              id="nas-auto-detect"
+              checked={nasAutoDetect}
+              onCheckedChange={async (checked) => {
+                setNasAutoDetectState(checked);
+                await api.setNasAutoDetect(checked);
               }}
             />
           </div>

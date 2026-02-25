@@ -30,7 +30,7 @@ A cross-platform desktop application for managing rsync backup jobs. Includes bo
 - [Rsync](https://github.com/RsyncProject/rsync) (a relatively recent version)
 - [Rust](https://rustup.rs) (stable)
 - [Node.js](https://nodejs.org) (18+) — only needed for the GUI
-- Platform-specific Tauri v2 dependencies (see [setup guide](docs/setup.md)) — only needed for the GUI
+- Platform-specific Tauri v2 dependencies (see [setup guide](docs/SETUP.md)) — only needed for the GUI
 
 ### Desktop GUI
 
@@ -54,7 +54,7 @@ cargo build -p rsync-commander --release
 cargo run -p rsync-commander
 ```
 
-See [Terminal UI](#terminal-ui-1) below for full usage, or [docs/setup.md](docs/setup.md) for detailed setup instructions.
+See [Terminal UI](#terminal-ui-1) below for full usage, or [docs/SETUP.md](docs/SETUP.md) for detailed setup instructions.
 
 ## Architecture
 
@@ -68,7 +68,7 @@ Rsync Studio is a Cargo workspace with three crates:
 
 Both frontends share the same `rsync-core` library, database, and job executor. The `ExecutionEventHandler` trait allows the GUI to emit Tauri events while the TUI uses mpsc channels — same execution logic, different event delivery.
 
-See [docs/architecture.md](docs/architecture.md) for the full architectural overview.
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full architectural overview.
 
 ## Terminal UI
 
@@ -173,9 +173,9 @@ cargo run -p rsync-commander
 
 ## Documentation
 
-- [Setup Guide](docs/setup.md) — prerequisites, installation, running the app
-- [Architecture](docs/architecture.md) — crate structure, data flow, design decisions
-- [Testing](docs/testing.md) — test infrastructure, running tests, adding tests
+- [Setup Guide](docs/SETUP.md) — prerequisites, installation, running the app
+- [Architecture](docs/ARCHITECTURE.md) — crate structure, data flow, design decisions
+- [Testing](docs/TESTING.md) — test infrastructure, running tests, adding tests
 - [Contributing](CONTRIBUTING.md) — how to contribute
 
 ## License

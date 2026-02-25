@@ -56,7 +56,7 @@ pub fn explain_flag(flag: &str) -> &'static str {
         "whole_file" => "Whole file (-W/--whole-file): disables rsync's delta-transfer algorithm and transfers whole files. Faster on fast networks.",
         "one_file_system" => "One file system (-x/--one-file-system): doesn't cross filesystem boundaries when recursing.",
         "ignore_existing" => "Ignore existing (--ignore-existing): skips files that already exist on the destination.",
-        "size_only" => "Size only (--size-only): compares files by size only, ignoring modification times.",
+        "size_only" => "Size only (--size-only): compares files by size only, ignoring modification times. Essential for NAS/SMB mounts where timestamps are unreliable.",
         "itemize_changes" => "Itemize changes (-i/--itemize-changes): outputs a change-summary for all updates.",
         "stats" => "Stats (--stats): prints a set of statistics about the file transfer at the end.",
         "no_implied_dirs" => "No implied dirs (--no-implied-dirs): doesn't send implied directory info, affecting how relative paths are handled.",

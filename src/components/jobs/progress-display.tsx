@@ -13,7 +13,7 @@ export function ProgressDisplay({ progress, status }: ProgressDisplayProps) {
     if (isTerminal) {
       const message =
         status === "Completed"
-          ? "Sync complete — nothing to transfer."
+          ? "Sync complete."
           : status === "Failed"
             ? "Job failed before progress data was received."
             : "Job was cancelled.";

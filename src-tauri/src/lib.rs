@@ -223,6 +223,9 @@ pub fn run() {
             commands::read_log_file_lines,
             commands::scrub_scan_logs,
             commands::scrub_apply_logs,
+            commands::detect_filesystem_type,
+            commands::get_nas_auto_detect,
+            commands::set_nas_auto_detect,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

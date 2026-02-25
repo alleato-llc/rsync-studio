@@ -1,5 +1,7 @@
-import { useReducer, useState } from "react";
+import { useReducer, useState, useEffect } from "react";
 import { useTrailingSlash } from "@/hooks/use-trailing-slash";
+import { useNasAutoDetect } from "@/hooks/use-nas-auto-detect";
+import { detectFilesystemType } from "@/lib/tauri";
 import type { JobDefinition, StorageLocation, SshConfig } from "@/types/job";
 import type { ScheduleConfig } from "@/types/schedule";
 import { Button } from "@/components/ui/button";
@@ -23,7 +25,8 @@ type Action =
   | { type: "SET_BACKUP_MODE"; mode: JobDefinition["backup_mode"] }
   | { type: "SET_OPTIONS"; options: JobDefinition["options"] }
   | { type: "SET_SSH_CONFIG"; ssh_config: SshConfig }
-  | { type: "SET_SCHEDULE"; schedule: ScheduleConfig | null };
+  | { type: "SET_SCHEDULE"; schedule: ScheduleConfig | null }
+  | { type: "ENABLE_NAS_MODE" };
 
 function needsSshConfig(source: StorageLocation, destination: StorageLocation): boolean {
   return source.type === "RemoteSsh" || destination.type === "RemoteSsh";
@@ -66,6 +69,15 @@ function jobReducer(state: JobDefinition, action: Action): JobDefinition {
       return { ...state, ssh_config: action.ssh_config };
     case "SET_SCHEDULE":
       return { ...state, schedule: action.schedule };
+    case "ENABLE_NAS_MODE": {
+      if (!state.options.size_only) {
+        return {
+          ...state,
+          options: { ...state.options, size_only: true },
+        };
+      }
+      return state;
+    }
   }
 }
 
@@ -99,6 +111,43 @@ export function JobForm({ initialJob, onSave, onCancel, title }: JobFormProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const autoTrailingSlash = useTrailingSlash();
+  const nasAutoDetect = useNasAutoDetect();
+  const [networkFs, setNetworkFs] = useState<{ location: "source" | "destination"; fsType: string } | null>(null);
+
+  const NETWORK_FS_TYPES = ["smbfs", "cifs", "nfs", "nfs4", "afpfs"];
+
+  useEffect(() => {
+    let cancelled = false;
+    const detect = async () => {
+      if (!nasAutoDetect) {
+        if (!cancelled) setNetworkFs(null);
+        return;
+      }
+      if (job.source.type === "Local" && job.source.path) {
+        try {
+          const fsType = await detectFilesystemType(job.source.path);
+          if (!cancelled && fsType && NETWORK_FS_TYPES.includes(fsType)) {
+            setNetworkFs({ location: "source", fsType });
+            dispatch({ type: "ENABLE_NAS_MODE" });
+            return;
+          }
+        } catch { /* ignore */ }
+      }
+      if (job.destination.type === "Local" && job.destination.path) {
+        try {
+          const fsType = await detectFilesystemType(job.destination.path);
+          if (!cancelled && fsType && NETWORK_FS_TYPES.includes(fsType)) {
+            setNetworkFs({ location: "destination", fsType });
+            dispatch({ type: "ENABLE_NAS_MODE" });
+            return;
+          }
+        } catch { /* ignore */ }
+      }
+      if (!cancelled) setNetworkFs(null);
+    };
+    detect();
+    return () => { cancelled = true; };
+  }, [job.source, job.destination, nasAutoDetect]);
 
   async function handleSubmit() {
     const validationErrors = validate(job);
@@ -178,6 +227,7 @@ export function JobForm({ initialJob, onSave, onCancel, title }: JobFormProps) {
                   onChange={(options) =>
                     dispatch({ type: "SET_OPTIONS", options })
                   }
+                  networkFs={networkFs}
                 />
                 {showSshConfig && (
                   <SshConfigField

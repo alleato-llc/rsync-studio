@@ -30,3 +30,5 @@ mod retention_runner_tests;
 mod itemize_parser_tests;
 #[cfg(test)]
 mod settings_service_tests;
+#[cfg(test)]
+mod progress_statistics_tests;

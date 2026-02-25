@@ -333,6 +333,9 @@ mod tests {
         fn walk_dir(&self, _: &Path) -> Result<Vec<PathBuf>, FsError> {
             Ok(vec![])
         }
+        fn filesystem_type(&self, _: &Path) -> Option<String> {
+            None
+        }
     }
 
     struct MockRsync {

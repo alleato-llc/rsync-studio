@@ -22,7 +22,7 @@ rsync-studio/
 │   └── src/main.rs         # Entry point
 └── src/                    # React frontend
     ├── components/         # UI components (jobs/, ui/)
-    ├── hooks/              # React hooks (use-jobs.ts)
+    ├── hooks/              # React hooks (use-jobs.ts, use-trailing-slash.ts, use-nas-auto-detect.ts)
     ├── lib/                # Utilities (tauri.ts, command-preview.ts, defaults.ts)
     ├── pages/              # Page components (jobs, history, settings)
     └── types/              # TypeScript type definitions mirroring Rust models
@@ -39,7 +39,7 @@ npx tsc --noEmit               # TypeScript type-check only
 
 # Rust
 cargo build --workspace        # Build all crates
-cargo test -p rsync-core       # Run all tests (191 tests)
+cargo test -p rsync-core       # Run all tests (254 tests)
 cargo test -p rsync-core -- <test_name>  # Run specific test
 
 # Tauri (GUI)
@@ -63,17 +63,23 @@ All domain logic uses traits for testability:
 
 Production implementations use real processes/SQLite. Tests use in-memory fakes (`TestRsyncClient`, `TestFileSystem`).
 
+### Settings System
+App-level settings use a key-value `settings` table in SQLite, exposed through `SettingsService` (typed getters/setters), Tauri commands, and TypeScript wrappers. Settings consumed outside the Settings page use React hooks (e.g., `useTrailingSlash`, `useNasAutoDetect`). See the Settings section in `docs/FEATURES.md` for the full inventory and how-to-add guide.
+
+### Per-Job vs App-Level Configuration
+Some features have both layers: an app-level setting controlling the feature globally (in `SettingsService` / Settings page) and per-job fields on `RsyncOptions` (stored in the job's JSON). Example: NAS compatibility has `nas_auto_detect` (app-level, controls auto-detection) and `size_only` (per-job, on `RsyncOptions` — emits `--size-only` to compare files by size only).
+
 ### ExecutionEventHandler (Frontend Abstraction)
 Job execution orchestration (log writing, statistics, snapshots) lives in `rsync-core`'s `JobExecutor`. The `ExecutionEventHandler` trait decouples it from any frontend: GUI implements with `AppHandle.emit()`, TUI implements with `mpsc::Sender`. If you modify execution behavior, change `job_executor.rs` — not the frontend wrappers.
 
 ### Shared Command Builder
-`crates/rsync-core/src/services/command_builder.rs` builds rsync argument vectors. Both the Rust `ProcessRsyncClient` and the TypeScript `src/lib/command-preview.ts` mirror this logic. If you modify rsync flag handling, update both.
+`crates/rsync-core/src/services/command_builder.rs` builds rsync argument vectors. Both the Rust `ProcessRsyncClient` and the TypeScript `src/lib/command-preview.ts` mirror this logic. If you modify rsync flag handling, update both. Also update `command_parser.rs` (flag parsing) and `command_explainer.rs` (flag descriptions) if adding new recognized flags.
 
 ### Frontend-Backend Type Alignment
 TypeScript types in `src/types/` must stay aligned with Rust models in `crates/rsync-core/src/models/`. The Tauri IPC layer serializes Rust structs as JSON, and the frontend deserializes into these TypeScript types.
 
 ### Form State Management
-Job forms use `useReducer` with the full `JobDefinition` as state. The reducer auto-manages SSH config (initializes when an SSH location is selected, nulls when removed).
+Job forms use `useReducer` with the full `JobDefinition` as state. The reducer auto-manages SSH config (initializes when an SSH location is selected, nulls when removed) and NAS compatibility (auto-enables `size_only` when a network filesystem is detected, if the app-level `nas_auto_detect` setting is enabled).
 
 ## Conventions
 
@@ -83,6 +89,8 @@ Job forms use `useReducer` with the full `JobDefinition` as state. The reducer a
 - shadcn/ui components live in `src/components/ui/` (do not modify these)
 - Path alias: `@/` maps to `src/` in both TypeScript and Vite config
 - Error types use `thiserror` in Rust; Tauri commands convert errors to `String` for IPC
+- New `RsyncOptions` fields require updates in **7 places**: Rust struct + `Default` impl, `command_builder.rs`, `command_parser.rs`, `command_explainer.rs`, TS `RsyncOptions` interface (`src/types/job.ts`), `src/lib/defaults.ts`, `src/lib/command-preview.ts`
+- New `FileSystem` trait methods require stubs in `TestFileSystem` and `MockFs` (preflight.rs)
 
 ## Testing
 

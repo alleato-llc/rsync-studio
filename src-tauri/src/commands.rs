@@ -459,6 +459,33 @@ pub fn scrub_apply_logs(
     log_scrubber::scrub_apply(&pattern, &file_paths).map_err(|e| e.to_string())
 }
 
+// --- NAS auto-detect setting ---
+
+#[tauri::command]
+pub fn get_nas_auto_detect(state: State<'_, AppState>) -> Result<bool, String> {
+    state
+        .settings_service
+        .get_nas_auto_detect()
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn set_nas_auto_detect(enabled: bool, state: State<'_, AppState>) -> Result<(), String> {
+    state
+        .settings_service
+        .set_nas_auto_detect(enabled)
+        .map_err(|e| e.to_string())
+}
+
+// --- Filesystem detection ---
+
+#[tauri::command]
+pub fn detect_filesystem_type(path: String) -> Option<String> {
+    use rsync_core::file_system::FileSystem;
+    let fs = RealFileSystem::new();
+    fs.filesystem_type(std::path::Path::new(&path))
+}
+
 // --- Log file commands ---
 
 #[tauri::command]

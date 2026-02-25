@@ -135,6 +135,8 @@ pub struct RsyncOptions {
     pub bandwidth_limit: Option<u64>,
     #[serde(default)]
     pub custom_args: Vec<String>,
+    #[serde(default)]
+    pub size_only: bool,
 }
 
 impl Default for RsyncOptions {
@@ -152,6 +154,7 @@ impl Default for RsyncOptions {
             include_patterns: Vec::new(),
             bandwidth_limit: None,
             custom_args: Vec::new(),
+            size_only: false,
         }
     }
 }

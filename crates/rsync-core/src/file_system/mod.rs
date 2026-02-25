@@ -41,4 +41,6 @@ pub trait FileSystem {
     fn copy_file(&self, from: &Path, to: &Path) -> Result<(), FsError>;
     fn hard_link(&self, original: &Path, link: &Path) -> Result<(), FsError>;
     fn walk_dir(&self, path: &Path) -> Result<Vec<PathBuf>, FsError>;
+
+    fn filesystem_type(&self, path: &Path) -> Option<String>;
 }

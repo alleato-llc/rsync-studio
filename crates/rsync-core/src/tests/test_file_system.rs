@@ -394,4 +394,8 @@ impl FileSystem for TestFileSystem {
         result.sort();
         Ok(result)
     }
+
+    fn filesystem_type(&self, _path: &Path) -> Option<String> {
+        None
+    }
 }

@@ -43,6 +43,10 @@ pub fn build_rsync_args(
         args.push("-h".to_string());
     }
 
+    if options.size_only {
+        args.push("--size-only".to_string());
+    }
+
     for pattern in &options.exclude_patterns {
         args.push(format!("--exclude={}", pattern));
     }
@@ -285,6 +289,29 @@ mod tests {
         );
         assert!(args.contains(&"/home/user/docs/".to_string()));
         assert!(args.contains(&"/backup/docs/".to_string()));
+    }
+
+    #[test]
+    fn test_size_only_flag() {
+        let options = RsyncOptions {
+            size_only: true,
+            ..default_opts()
+        };
+        let args = build_rsync_args(&local("/src/"), &local("/dst/"), &options, None, None, false);
+        assert!(args.contains(&"--size-only".to_string()));
+    }
+
+    #[test]
+    fn test_size_only_disabled_by_default() {
+        let args = build_rsync_args(
+            &local("/src/"),
+            &local("/dst/"),
+            &default_opts(),
+            None,
+            None,
+            false,
+        );
+        assert!(!args.contains(&"--size-only".to_string()));
     }
 
     #[test]

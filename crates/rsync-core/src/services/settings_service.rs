@@ -12,6 +12,9 @@ const KEY_MAX_HISTORY_PER_JOB: &str = "max_history_per_job";
 const KEY_AUTO_TRAILING_SLASH: &str = "auto_trailing_slash";
 const KEY_DRY_MODE_ITEMIZE_CHANGES: &str = "dry_mode_itemize_changes";
 const KEY_DRY_MODE_CHECKSUM: &str = "dry_mode_checksum";
+const KEY_NAS_AUTO_DETECT: &str = "nas_auto_detect";
+
+const DEFAULT_NAS_AUTO_DETECT: bool = true;
 
 const DEFAULT_AUTO_TRAILING_SLASH: bool = true;
 
@@ -118,6 +121,21 @@ impl SettingsService {
             itemize_changes,
             checksum,
         })
+    }
+
+    pub fn get_nas_auto_detect(&self) -> Result<bool, AppError> {
+        Ok(self
+            .settings
+            .get_setting(KEY_NAS_AUTO_DETECT)?
+            .map(|v| v == "true")
+            .unwrap_or(DEFAULT_NAS_AUTO_DETECT))
+    }
+
+    pub fn set_nas_auto_detect(&self, enabled: bool) -> Result<(), AppError> {
+        self.settings.set_setting(
+            KEY_NAS_AUTO_DETECT,
+            if enabled { "true" } else { "false" },
+        )
     }
 
     pub fn set_dry_mode_settings(&self, settings: &DryModeSettings) -> Result<(), AppError> {

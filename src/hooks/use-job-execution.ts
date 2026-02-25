@@ -55,6 +55,8 @@ export function useJobExecution() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+
     // Subscribe to Tauri events
     const setupListeners = async () => {
       const unlistenLog = await listen<LogLine>("job-log", (event) => {
@@ -130,6 +132,14 @@ export function useJobExecution() {
         });
       });
 
+      if (cancelled) {
+        unlistenLog();
+        unlistenProgress();
+        unlistenItemize();
+        unlistenStatus();
+        return;
+      }
+
       unlistenRefs.current = [unlistenLog, unlistenProgress, unlistenItemize, unlistenStatus];
     };
 
@@ -137,12 +147,14 @@ export function useJobExecution() {
 
     // Load initially running jobs
     getRunningJobs().then((ids) => {
+      if (cancelled) return;
       for (const id of ids) {
         updateJob(id, { status: "Running" });
       }
     });
 
     return () => {
+      cancelled = true;
       for (const unlisten of unlistenRefs.current) {
         unlisten();
       }

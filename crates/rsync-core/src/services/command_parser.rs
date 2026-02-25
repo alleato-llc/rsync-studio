@@ -316,6 +316,7 @@ pub fn to_job_definition(parsed: &ParsedCommand) -> Result<JobDefinition, String
         include_patterns: parsed.include_patterns.clone(),
         bandwidth_limit: parsed.bandwidth_limit,
         custom_args: parsed.custom_args.clone(),
+        size_only: parsed.flags.contains(&"size_only".to_string()),
     };
 
     // Parse SSH config from -e flag

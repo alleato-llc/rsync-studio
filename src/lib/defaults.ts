@@ -22,6 +22,7 @@ export function createDefaultJob(): JobDefinition {
       include_patterns: [],
       bandwidth_limit: null,
       custom_args: [],
+      size_only: false,
     },
     ssh_config: null,
     schedule: null,

@@ -5,7 +5,7 @@ Thank you for your interest in contributing to Rsync Studio! This guide covers h
 ## Getting Started
 
 1. Fork and clone the repository
-2. Follow the [setup guide](docs/setup.md) to install prerequisites
+2. Follow the [setup guide](docs/SETUP.md) to install prerequisites
 3. Run `npm install` and `cargo build --workspace` to verify everything builds
 4. Run `cargo test -p rsync-core` to confirm all tests pass
 
@@ -14,7 +14,7 @@ Thank you for your interest in contributing to Rsync Studio! This guide covers h
 ### Before Making Changes
 
 1. Create a feature branch from `main`
-2. Understand the [architecture](docs/architecture.md) — especially which crate your changes belong in
+2. Understand the [architecture](docs/ARCHITECTURE.md) — especially which crate your changes belong in
 
 ### Where to Put Code
 
@@ -85,7 +85,7 @@ Do not manually edit files in `src/components/ui/`.
 - All domain logic should have tests
 - Use `TestFileSystem` and `TestRsyncClient` for rsync-related tests
 - SQLite tests use `tempfile` for isolated databases
-- See [docs/testing.md](docs/testing.md) for details
+- See [docs/TESTING.md](docs/TESTING.md) for details
 
 ## Keeping Types in Sync
 

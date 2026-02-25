@@ -64,6 +64,8 @@ export function buildRsyncArgs(
   if (options.progress) args.push("--progress");
   if (options.human_readable) args.push("-h");
 
+  if (options.size_only) args.push("--size-only");
+
   for (const pattern of options.exclude_patterns) {
     args.push(`--exclude=${pattern}`);
   }

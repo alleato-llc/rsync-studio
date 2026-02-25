@@ -1,3 +1,4 @@
+use std::ffi::CString;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -155,4 +156,63 @@ impl FileSystem for RealFileSystem {
         result.sort();
         Ok(result)
     }
+
+    fn filesystem_type(&self, path: &Path) -> Option<String> {
+        filesystem_type_impl(path)
+    }
+}
+
+#[cfg(target_os = "macos")]
+fn filesystem_type_impl(path: &Path) -> Option<String> {
+    let c_path = CString::new(path.to_str()?).ok()?;
+    unsafe {
+        let mut stat: libc::statfs = std::mem::zeroed();
+        if libc::statfs(c_path.as_ptr(), &mut stat) != 0 {
+            return None;
+        }
+        let name_bytes: Vec<u8> = stat
+            .f_fstypename
+            .iter()
+            .map(|&b| b as u8)
+            .take_while(|&b| b != 0)
+            .collect();
+        String::from_utf8(name_bytes).ok()
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn filesystem_type_impl(path: &Path) -> Option<String> {
+    use std::io::BufRead;
+
+    let canonical = path.canonicalize().ok()?;
+    let canonical_str = canonical.to_str()?;
+
+    let file = fs::File::open("/proc/mounts").ok()?;
+    let reader = std::io::BufReader::new(file);
+
+    let mut best_mount: Option<(usize, String)> = None;
+
+    for line in reader.lines() {
+        let line = line.ok()?;
+        let parts: Vec<&str> = line.split_whitespace().collect();
+        if parts.len() < 3 {
+            continue;
+        }
+        let mount_point = parts[1];
+        let fs_type = parts[2];
+
+        if canonical_str.starts_with(mount_point) {
+            let len = mount_point.len();
+            if best_mount.as_ref().map_or(true, |(best_len, _)| len > *best_len) {
+                best_mount = Some((len, fs_type.to_string()));
+            }
+        }
+    }
+
+    best_mount.map(|(_, fs_type)| fs_type)
+}
+
+#[cfg(not(any(target_os = "macos", target_os = "linux")))]
+fn filesystem_type_impl(_path: &Path) -> Option<String> {
+    None
 }

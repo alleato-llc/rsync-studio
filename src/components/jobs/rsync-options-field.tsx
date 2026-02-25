@@ -1,4 +1,5 @@
 import type { RsyncOptions } from "@/types/job";
+import { Info } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -8,6 +9,7 @@ import { PatternListField } from "./pattern-list-field";
 interface RsyncOptionsFieldProps {
   value: RsyncOptions;
   onChange: (value: RsyncOptions) => void;
+  networkFs?: { location: "source" | "destination"; fsType: string } | null;
 }
 
 const BOOLEAN_FLAGS: { key: keyof RsyncOptions; label: string; description: string }[] = [
@@ -20,7 +22,7 @@ const BOOLEAN_FLAGS: { key: keyof RsyncOptions; label: string; description: stri
   { key: "human_readable", label: "Human Readable (-h)", description: "Output numbers in readable format" },
 ];
 
-export function RsyncOptionsField({ value, onChange }: RsyncOptionsFieldProps) {
+export function RsyncOptionsField({ value, onChange, networkFs }: RsyncOptionsFieldProps) {
   function toggleFlag(key: keyof RsyncOptions) {
     onChange({ ...value, [key]: !value[key] });
   }
@@ -46,6 +48,38 @@ export function RsyncOptionsField({ value, onChange }: RsyncOptionsFieldProps) {
             </div>
           ))}
         </div>
+      </div>
+
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <Label>NAS / Network Filesystem</Label>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Enable --size-only to compare files by size only, ignoring
+              timestamps, permissions, and ownership. Essential for SMB, NFS,
+              and other network mounts where these attributes are unreliable.
+            </p>
+          </div>
+          <Switch
+            checked={value.size_only}
+            onCheckedChange={() => toggleFlag("size_only")}
+          />
+        </div>
+
+        {networkFs && (
+          <div className="flex gap-3 rounded-md border border-blue-200 bg-blue-50 p-3 dark:border-blue-900 dark:bg-blue-950">
+            <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400" />
+            <div className="text-sm text-blue-800 dark:text-blue-200">
+              <p className="font-medium">Network filesystem detected</p>
+              <p className="mt-1">
+                Your {networkFs.location} is on a <code className="rounded bg-blue-100 px-1 dark:bg-blue-900">{networkFs.fsType}</code> mount.
+                These filesystems often report incorrect timestamps and permissions, causing rsync
+                to re-transfer unchanged files every run. Size-only mode fixes this by comparing
+                files by size alone.
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
       <PatternListField

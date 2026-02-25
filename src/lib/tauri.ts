@@ -205,6 +205,24 @@ export async function readLogFileLines(
   return invoke<LogFileChunk>("read_log_file_lines", { path, offset, limit });
 }
 
+// --- NAS auto-detect setting ---
+
+export async function getNasAutoDetect(): Promise<boolean> {
+  return invoke<boolean>("get_nas_auto_detect");
+}
+
+export async function setNasAutoDetect(enabled: boolean): Promise<void> {
+  return invoke<void>("set_nas_auto_detect", { enabled });
+}
+
+// --- Filesystem detection ---
+
+export async function detectFilesystemType(
+  path: string
+): Promise<string | null> {
+  return invoke<string | null>("detect_filesystem_type", { path });
+}
+
 // --- Log scrubber ---
 
 export async function scrubScanLogs(
