@@ -1,4 +1,3 @@
-use std::ffi::CString;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -164,6 +163,7 @@ impl FileSystem for RealFileSystem {
 
 #[cfg(target_os = "macos")]
 fn filesystem_type_impl(path: &Path) -> Option<String> {
+    use std::ffi::CString;
     let c_path = CString::new(path.to_str()?).ok()?;
     unsafe {
         let mut stat: libc::statfs = std::mem::zeroed();

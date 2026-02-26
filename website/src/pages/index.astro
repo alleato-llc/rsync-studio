@@ -1,0 +1,1850 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { config } from "../config";
+
+const githubUrl = "https://github.com/alleato-llc/rsync-studio";
+---
+
+<Layout title={config.site.title} description={config.site.description}>
+    <!-- Header -->
+    <header class="header" id="header">
+        <div class="container header-inner">
+            <a href="#" class="header-brand">
+                <svg class="header-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="28" height="28">
+                    <defs>
+                        <linearGradient id="hgrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#7C3AED;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#F59E0B;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    <rect width="128" height="128" rx="28" fill="url(#hgrad)"/>
+                    <g transform="translate(64,64)" fill="none" stroke="white" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M-24,-8 L24,-8" />
+                        <path d="M14,-18 L24,-8 L14,2" />
+                        <path d="M24,8 L-24,8" />
+                        <path d="M-14,-2 L-24,8 L-14,18" />
+                    </g>
+                </svg>
+                <span>Rsync Studio</span>
+            </a>
+
+            <nav class="header-nav" id="header-nav">
+                <a href="#features">Features</a>
+                <a href="#architecture">Architecture</a>
+                <a href="#screenshots">Screenshots</a>
+                <a href="#downloads">Download</a>
+            </nav>
+
+            <div class="header-actions">
+                {config.theme.enabled && (
+                    <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+                        <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="5"></circle>
+                            <line x1="12" y1="1" x2="12" y2="3"></line>
+                            <line x1="12" y1="21" x2="12" y2="23"></line>
+                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                            <line x1="1" y1="12" x2="3" y2="12"></line>
+                            <line x1="21" y1="12" x2="23" y2="12"></line>
+                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                        </svg>
+                        <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                        </svg>
+                        <svg class="icon-system" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                            <line x1="8" y1="21" x2="16" y2="21"></line>
+                            <line x1="12" y1="17" x2="12" y2="21"></line>
+                        </svg>
+                    </button>
+                )}
+
+                <a href={githubUrl} class="header-github" aria-label="View on GitHub" target="_blank" rel="noopener noreferrer">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                    </svg>
+                </a>
+
+                <button class="hamburger" id="hamburger" aria-label="Toggle navigation">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="container">
+                <div class="hero-content">
+                    <h1>{config.hero.tagline}<span class="accent">{config.hero.accentWord}</span></h1>
+                    <p class="subtitle">{config.hero.subtitle}</p>
+                    <div class="hero-buttons">
+                        <a href="#downloads" class="btn btn-primary">Download</a>
+                        <a href={githubUrl} class="btn btn-secondary" target="_blank" rel="noopener noreferrer">View on GitHub</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Feature Pillars -->
+        <section class="pillars" id="features">
+            <div class="container">
+                <h2>Why Rsync Studio?</h2>
+                <div class="pillars-grid">
+                    {config.pillars.map((pillar) => (
+                        <div class="pillar-card">
+                            <div class="pillar-icon">
+                                {pillar.icon === "monitor" && (
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                                        <line x1="8" y1="21" x2="16" y2="21"></line>
+                                        <line x1="12" y1="17" x2="12" y2="21"></line>
+                                    </svg>
+                                )}
+                                {pillar.icon === "shield" && (
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                                        <path d="m9 12 2 2 4-4"></path>
+                                    </svg>
+                                )}
+                                {pillar.icon === "layers" && (
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                                        <polyline points="2 17 12 22 22 17"></polyline>
+                                        <polyline points="2 12 12 17 22 12"></polyline>
+                                    </svg>
+                                )}
+                            </div>
+                            <h3>{pillar.title}</h3>
+                            <p>{pillar.description}</p>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </section>
+
+        <!-- Feature Grid -->
+        <section class="feature-grid-section">
+            <div class="container">
+                <h2>Feature Highlights</h2>
+                <p class="section-subtitle">Everything you need to manage rsync backups effectively</p>
+                <div class="feature-grid">
+                    {config.features.map((feature) => (
+                        <div class="feature-card">
+                            <div class="feature-card-header">
+                                <div class="feature-icon-small">
+                                    {feature.icon === "terminal" && (
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="4 17 10 11 4 5"></polyline>
+                                            <line x1="12" y1="19" x2="20" y2="19"></line>
+                                        </svg>
+                                    )}
+                                    {feature.icon === "copy" && (
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                        </svg>
+                                    )}
+                                    {feature.icon === "lock" && (
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                        </svg>
+                                    )}
+                                    {feature.icon === "clock" && (
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <polyline points="12 6 12 12 16 14"></polyline>
+                                        </svg>
+                                    )}
+                                    {feature.icon === "chart" && (
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <line x1="18" y1="20" x2="18" y2="10"></line>
+                                            <line x1="12" y1="20" x2="12" y2="4"></line>
+                                            <line x1="6" y1="20" x2="6" y2="14"></line>
+                                        </svg>
+                                    )}
+                                    {feature.icon === "wifi" && (
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M5 12.55a11 11 0 0 1 14.08 0"></path>
+                                            <path d="M1.42 9a16 16 0 0 1 21.16 0"></path>
+                                            <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+                                            <line x1="12" y1="20" x2="12.01" y2="20"></line>
+                                        </svg>
+                                    )}
+                                    {feature.icon === "search" && (
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="11" cy="11" r="8"></circle>
+                                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                        </svg>
+                                    )}
+                                    {feature.icon === "code" && (
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="16 18 22 12 16 6"></polyline>
+                                            <polyline points="8 6 2 12 8 18"></polyline>
+                                        </svg>
+                                    )}
+                                    {feature.icon === "archive" && (
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="21 8 21 21 3 21 3 8"></polyline>
+                                            <rect x="1" y="3" width="22" height="5"></rect>
+                                            <line x1="10" y1="12" x2="14" y2="12"></line>
+                                        </svg>
+                                    )}
+                                    {feature.icon === "monitor-small" && (
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="4 17 10 11 4 5"></polyline>
+                                            <line x1="12" y1="19" x2="20" y2="19"></line>
+                                        </svg>
+                                    )}
+                                    {feature.icon === "download" && (
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                            <polyline points="7 10 12 15 17 10"></polyline>
+                                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                                        </svg>
+                                    )}
+                                    {feature.icon === "palette" && (
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="13.5" cy="6.5" r="2.5"></circle>
+                                            <circle cx="17.5" cy="10.5" r="2.5"></circle>
+                                            <circle cx="8.5" cy="7.5" r="2.5"></circle>
+                                            <circle cx="6.5" cy="12.5" r="2.5"></circle>
+                                            <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"></path>
+                                        </svg>
+                                    )}
+                                </div>
+                                <span class={`tag tag-${feature.tag.toLowerCase()}`}>{feature.tag}</span>
+                            </div>
+                            <h3>{feature.title}</h3>
+                            <p>{feature.description}</p>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </section>
+
+        <!-- Screenshots Section (conditional) -->
+        {config.screenshots.length > 0 && (
+            <section class="screenshots" id="screenshots">
+                <div class="container">
+                    <h2>See It In Action</h2>
+                    <div
+                        class="carousel"
+                        data-autoplay={config.carousel.autoplay.enabled.toString()}
+                        data-autoplay-interval={config.carousel.autoplay.interval.toString()}
+                        data-lightbox-nav={config.carousel.lightboxNavigation.toString()}
+                    >
+                        <button class="carousel-btn carousel-btn-prev" aria-label="Previous slide">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="m15 18-6-6 6-6"></path>
+                            </svg>
+                        </button>
+                        <div class="carousel-track-container">
+                            <div class="carousel-track">
+                                {config.screenshots.map((screenshot) => (
+                                    <div class="carousel-slide">
+                                        <img src={screenshot.src} alt={screenshot.alt} />
+                                        <p>{screenshot.caption}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <button class="carousel-btn carousel-btn-next" aria-label="Next slide">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="m9 18 6-6-6-6"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="carousel-dots"></div>
+
+                    <!-- Lightbox -->
+                    <div class="lightbox" id="lightbox" data-lightbox-nav={config.carousel.lightboxNavigation.toString()}>
+                        <button class="lightbox-close" aria-label="Close lightbox">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                        {config.carousel.lightboxNavigation && (
+                            <button class="lightbox-nav lightbox-prev" aria-label="Previous image">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="m15 18-6-6 6-6" />
+                                </svg>
+                            </button>
+                        )}
+                        <img class="lightbox-image" id="lightbox-image" src="" alt="" />
+                        {config.carousel.lightboxNavigation && (
+                            <button class="lightbox-nav lightbox-next" aria-label="Next image">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="m9 18 6-6-6-6" />
+                                </svg>
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </section>
+        )}
+
+        <!-- Screenshots anchor (when carousel is hidden) -->
+        {config.screenshots.length === 0 && <div id="screenshots"></div>}
+
+        <!-- Architecture Section -->
+        <section class="architecture" id="architecture">
+            <div class="container">
+                <h2>Architecture</h2>
+                <p class="section-subtitle">Two frontends, one shared Rust core</p>
+                <div class="arch-diagram">
+                    <!-- Frontend layer -->
+                    <div class="arch-top-row">
+                        {config.architecture.frontends.map((fe, i) => (
+                            <div class={`arch-box ${i === 0 ? 'arch-gui' : 'arch-tui'}`}>
+                                <h3>{fe.label}</h3>
+                                <p class="arch-tech">{fe.description}</p>
+                                <ul>
+                                    {fe.items.map((item) => <li>{item}</li>)}
+                                </ul>
+                            </div>
+                        ))}
+                    </div>
+
+                    <!-- Arrows from frontends to core -->
+                    <div class="arch-arrows">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <polyline points="19 12 12 19 5 12"></polyline>
+                        </svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <polyline points="19 12 12 19 5 12"></polyline>
+                        </svg>
+                    </div>
+
+                    <!-- Core: outer container -->
+                    <div class="arch-core-container">
+                        <div class="arch-core-header">
+                            <h3>{config.architecture.core.label}</h3>
+                            <p class="arch-tech">{config.architecture.core.description}</p>
+                        </div>
+
+                        <div class="arch-core-layers">
+                            <!-- Services + Background side by side -->
+                            <div class="arch-core-row">
+                                <div class="arch-layer arch-layer-services">
+                                    <div class="arch-layer-label">
+                                        <!-- Gear icon -->
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                                        </svg>
+                                        <span>{config.architecture.core.services.label}</span>
+                                    </div>
+                                    <div class="arch-layer-chips">
+                                        {config.architecture.core.services.items.map((item) => (
+                                            <span class="arch-chip arch-chip-services">{item}</span>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div class="arch-layer arch-layer-async">
+                                    <div class="arch-layer-label">
+                                        <!-- Refresh/cycle icon -->
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="23 4 23 10 17 10"></polyline>
+                                            <polyline points="1 20 1 14 7 14"></polyline>
+                                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                                        </svg>
+                                        <span>{config.architecture.core.async.label}</span>
+                                    </div>
+                                    <div class="arch-layer-chips">
+                                        {config.architecture.core.async.items.map((item) => (
+                                            <span class="arch-chip arch-chip-async">{item}</span>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- Arrow from core to persistence -->
+                    <div class="arch-arrows arch-arrows-single">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <polyline points="19 12 12 19 5 12"></polyline>
+                        </svg>
+                    </div>
+
+                    <!-- Persistence (standalone layer) -->
+                    <div class="arch-persistence-container">
+                        <div class="arch-layer arch-layer-persistence">
+                            <div class="arch-layer-label">
+                                <!-- Database icon -->
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+                                    <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+                                    <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
+                                </svg>
+                                <span>{config.architecture.persistence.label}</span>
+                            </div>
+                            <div class="arch-layer-chips">
+                                {config.architecture.persistence.items.map((item) => (
+                                    <span class="arch-chip arch-chip-persistence">{item}</span>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Getting Started -->
+        <section class="getting-started">
+            <div class="container">
+                <h2>Getting Started</h2>
+                <p class="section-subtitle">Clone, build, and run</p>
+                <div class="gs-panel gs-panel-full">
+                    <div class="gs-panel-header">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="4"></circle>
+                            <line x1="1.05" y1="12" x2="7" y2="12"></line>
+                            <line x1="17.01" y1="12" x2="22.96" y2="12"></line>
+                        </svg>
+                        <h3>{config.gettingStarted.clone.title}</h3>
+                    </div>
+                    <div class="gs-steps">
+                        {config.gettingStarted.clone.steps.map((step) => (
+                            <div class="gs-step">
+                                <code>{step.command}</code>
+                                <span>{step.description}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+                <div class="getting-started-panels">
+                    <div class="gs-panel">
+                        <div class="gs-panel-header">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                                <line x1="8" y1="21" x2="16" y2="21"></line>
+                                <line x1="12" y1="17" x2="12" y2="21"></line>
+                            </svg>
+                            <h3>{config.gettingStarted.gui.title}</h3>
+                        </div>
+                        <div class="gs-steps">
+                            {config.gettingStarted.gui.steps.map((step) => (
+                                <div class="gs-step">
+                                    <code>{step.command}</code>
+                                    <span>{step.description}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <div class="gs-panel">
+                        <div class="gs-panel-header">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="4 17 10 11 4 5"></polyline>
+                                <line x1="12" y1="19" x2="20" y2="19"></line>
+                            </svg>
+                            <h3>{config.gettingStarted.tui.title}</h3>
+                        </div>
+                        <div class="gs-steps">
+                            {config.gettingStarted.tui.steps.map((step) => (
+                                <div class="gs-step">
+                                    <code>{step.command}</code>
+                                    <span>{step.description}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Downloads -->
+        <section class="downloads" id="downloads">
+            <div class="container">
+                <h2>Download</h2>
+                <p class="section-subtitle">Available for macOS and Linux</p>
+                <div class="download-grid">
+                    {config.downloads.map((dl) => (
+                        <a href={dl.href} class="download-card" target="_blank" rel="noopener noreferrer">
+                            <div class="download-icon">
+                                {dl.icon === "apple" && (
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                                    </svg>
+                                )}
+                                {dl.icon === "linux" && (
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M12.504 0c-.155 0-.311.01-.465.035-.921.152-1.385.899-1.498 1.452-.162.792.02 1.677.544 2.317.075.09.146.176.225.259.153.167.307.329.481.475-.136.08-.264.169-.382.271-.234.197-.403.464-.486.768a1.655 1.655 0 0 0 .263 1.396c.151.197.34.36.555.484-.025.283.013.57.114.84.092.236.22.453.381.641-.044.14-.072.285-.082.432a2.32 2.32 0 0 0 .15 1.02c.098.243.245.464.432.649-.105.399-.028.836.212 1.182.169.243.405.43.68.536-.009.087-.004.175.016.26.135.586.602 1.047 1.176 1.178.147.033.3.044.45.032.087.36.282.685.563.93.39.343.903.514 1.42.473.393-.032.77-.174 1.082-.41.322.26.705.427 1.11.486.489.067.993-.04 1.393-.3a2.11 2.11 0 0 0 .752-.84c.04-.088.07-.179.094-.272a1.85 1.85 0 0 0 .561-.202c.434-.257.737-.64.87-1.1.04-.138.064-.282.072-.426.258-.154.475-.365.636-.623.253-.402.32-.894.185-1.34a2.47 2.47 0 0 0 .336-.536c.198-.433.237-.927.113-1.39a1.71 1.71 0 0 0-.476-.748c.061-.22.082-.448.062-.674a1.66 1.66 0 0 0-.402-.92c-.207-.229-.472-.393-.768-.476.059-.306.021-.624-.114-.905a1.55 1.55 0 0 0-.728-.704c.087-.287.08-.592-.023-.873a1.455 1.455 0 0 0-.59-.7c.006-.14-.005-.28-.035-.418a1.39 1.39 0 0 0-.59-.847 1.39 1.39 0 0 0-1.002-.206c-.285.048-.548.192-.75.414-.06-.155-.15-.297-.268-.417a1.283 1.283 0 0 0-.924-.38 1.29 1.29 0 0 0-.926.383c-.11.113-.196.244-.258.39-.162-.12-.356-.188-.557-.193-.267-.005-.528.09-.733.273-.134.12-.233.271-.291.439-.23-.04-.468-.02-.688.06-.285.1-.524.298-.677.558-.04.067-.074.138-.102.212a1.47 1.47 0 0 0-.728.153 1.35 1.35 0 0 0-.617.586c-.088.168-.138.354-.143.543l-.003.065Z"/>
+                                    </svg>
+                                )}
+                                {dl.icon === "terminal" && (
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="4 17 10 11 4 5"></polyline>
+                                        <line x1="12" y1="19" x2="20" y2="19"></line>
+                                    </svg>
+                                )}
+                            </div>
+                            <div class="download-info">
+                                <span class="download-label">{dl.label}</span>
+                                <span class="download-sublabel">{dl.sublabel}</span>
+                            </div>
+                            <svg class="download-arrow" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M5 12h14"></path>
+                                <path d="m12 5 7 7-7 7"></path>
+                            </svg>
+                        </a>
+                    ))}
+                </div>
+            </div>
+        </section>
+
+        <!-- Active Development -->
+        {config.activeDevelopment.enabled && (
+            <section class="active-dev">
+                <div class="container">
+                    <div class="active-dev-banner">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+                        </svg>
+                        <span>{config.activeDevelopment.message}</span>
+                        <div class="active-dev-links">
+                            {config.activeDevelopment.links.reportIssue.enabled && (
+                                <a href={config.activeDevelopment.links.reportIssue.url} target="_blank" rel="noopener noreferrer">
+                                    {config.activeDevelopment.links.reportIssue.label}
+                                </a>
+                            )}
+                            {config.activeDevelopment.links.reportIssue.enabled && config.activeDevelopment.links.requestFeature.enabled && (
+                                <span class="link-sep">&middot;</span>
+                            )}
+                            {config.activeDevelopment.links.requestFeature.enabled && (
+                                <a href={config.activeDevelopment.links.requestFeature.url} target="_blank" rel="noopener noreferrer">
+                                    {config.activeDevelopment.links.requestFeature.label}
+                                </a>
+                            )}
+                            {config.activeDevelopment.links.requestFeature.enabled && config.activeDevelopment.links.collaborate.enabled && (
+                                <span class="link-sep">&middot;</span>
+                            )}
+                            {config.activeDevelopment.links.collaborate.enabled && (
+                                <a href={config.activeDevelopment.links.collaborate.url} target="_blank" rel="noopener noreferrer">
+                                    {config.activeDevelopment.links.collaborate.label}
+                                </a>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </section>
+        )}
+
+        <!-- Buy Me a Coffee -->
+        {config.buymeacoffee.enabled && (
+            <section class="tip-jar">
+                <div class="container">
+                    <h2>Fuel the Project</h2>
+                    <p class="tip-subtitle">{config.buymeacoffee.message}</p>
+                    <a href={config.buymeacoffee.url} class="bmc-btn" target="_blank" rel="noopener noreferrer">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M20.216 6.415l-.132-.666c-.119-.598-.388-1.163-1.001-1.379-.197-.069-.42-.098-.57-.241-.152-.143-.196-.366-.231-.572-.065-.378-.125-.756-.192-1.133-.057-.325-.102-.69-.25-.987-.195-.4-.597-.634-.996-.788a5.723 5.723 0 00-.626-.194c-1-.263-2.05-.36-3.077-.416a25.834 25.834 0 00-3.7.062c-.915.083-1.88.184-2.75.5-.318.116-.646.256-.888.501-.297.302-.393.77-.177 1.146.154.267.415.456.692.58.36.162.737.284 1.123.366 1.075.238 2.189.331 3.287.37 1.218.05 2.437.01 3.65-.118.299-.033.598-.073.896-.119.352-.054.578-.513.474-.834-.124-.383-.457-.531-.834-.473-.466.074-.96.108-1.382.146-1.177.08-2.358.082-3.536.006a22.228 22.228 0 01-1.157-.107c-.086-.01-.18-.025-.258-.036-.243-.036-.484-.08-.724-.13-.111-.027-.111-.185 0-.212h.005c.277-.06.557-.108.838-.147h.002c.131-.009.263-.032.394-.048a25.076 25.076 0 013.426-.12c.674.019 1.347.067 2.017.144l.228.031c.267.04.533.088.798.145.392.085.895.113 1.07.542.055.137.08.288.111.431l.319 1.484a.237.237 0 01-.199.284h-.003c-.037.006-.075.01-.112.015a36.704 36.704 0 01-4.743.295 37.059 37.059 0 01-4.699-.304c-.14-.017-.293-.042-.417-.06-.326-.048-.649-.108-.973-.161-.393-.065-.768-.032-1.123.161-.29.16-.527.404-.675.701-.154.316-.199.66-.267 1-.069.34-.176.707-.135 1.056.087.753.613 1.365 1.37 1.502a39.69 39.69 0 0011.343.376.483.483 0 01.535.53l-.071.697-1.018 9.907c-.041.41-.047.832-.125 1.237-.122.637-.553 1.028-1.182 1.171-.577.131-1.165.2-1.756.205-.656.004-1.31-.025-1.966-.022-.699.004-1.556-.06-2.095-.58-.475-.458-.54-1.174-.605-1.793l-.731-7.013-.322-3.094c-.037-.351-.286-.695-.678-.678-.336.015-.718.3-.678.679l.228 2.185.949 9.112c.147 1.344 1.174 2.068 2.446 2.272.742.12 1.503.144 2.257.156.966.016 1.942.053 2.892-.122 1.408-.258 2.465-1.198 2.616-2.657.34-3.332.683-6.663 1.024-9.995l.215-2.087a.484.484 0 01.39-.426c.402-.078.787-.212 1.074-.518.455-.488.546-1.124.385-1.766zm-1.478.772c-.145.137-.363.201-.578.233-2.416.359-4.866.54-7.308.46-1.748-.06-3.477-.254-5.207-.498-.17-.024-.353-.055-.47-.18-.22-.236-.111-.71-.054-.995.052-.26.152-.609.463-.646.484-.057 1.046.148 1.526.22.577.088 1.156.159 1.737.212 2.48.226 5.002.19 7.472-.14.45-.06.899-.13 1.345-.21.399-.072.84-.206 1.08.206.166.281.188.657.162.974a.544.544 0 01-.169.364zm-6.159 3.9c-.862.37-1.84.788-3.109.788a5.884 5.884 0 01-1.569-.217l.877 9.004c.065.78.717 1.38 1.5 1.38 0 0 1.243.065 1.658.065.447 0 1.786-.065 1.786-.065.783 0 1.434-.6 1.499-1.38l.94-9.95a3.996 3.996 0 00-1.322-.238c-.826 0-1.491.284-2.26.613z"/>
+                        </svg>
+                        {config.buymeacoffee.buttonText}
+                    </a>
+                </div>
+            </section>
+        )}
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="container">
+                <div class="footer-content">
+                    <div class="footer-links">
+                        {config.footer.links.map((link) => (
+                            <a href={link.url} target="_blank" rel="noopener noreferrer">{link.label}</a>
+                        ))}
+                    </div>
+                    <p class="footer-copy">
+                        &copy; {config.footer.year} {config.footer.copyright}. Built with Rust &amp; Astro.
+                    </p>
+                </div>
+            </div>
+        </footer>
+    </main>
+</Layout>
+
+<style>
+    /* ==================== Header ==================== */
+    .header {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        border-bottom: 1px solid var(--color-border);
+        backdrop-filter: blur(12px);
+        background: rgba(255, 255, 255, 0.85);
+    }
+
+    :global([data-theme="dark"]) .header {
+        background: rgba(15, 15, 26, 0.85);
+    }
+
+    .header-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 64px;
+    }
+
+    .header-brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 700;
+        font-size: 1.125rem;
+        color: var(--color-text-primary);
+        text-decoration: none;
+    }
+
+    .header-brand:hover {
+        color: var(--color-text-primary);
+    }
+
+    .header-nav {
+        display: flex;
+        gap: 32px;
+    }
+
+    .header-nav a {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: var(--color-text-secondary);
+        transition: color 0.2s ease;
+    }
+
+    .header-nav a:hover {
+        color: var(--color-text-primary);
+    }
+
+    .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .header-github {
+        color: var(--color-text-secondary);
+        display: flex;
+        align-items: center;
+        transition: color 0.2s ease;
+    }
+
+    .header-github:hover {
+        color: var(--color-text-primary);
+    }
+
+    .hamburger {
+        display: none;
+        flex-direction: column;
+        gap: 5px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 4px;
+    }
+
+    .hamburger span {
+        display: block;
+        width: 22px;
+        height: 2px;
+        background: var(--color-text-primary);
+        border-radius: 2px;
+        transition: transform 0.2s ease, opacity 0.2s ease;
+    }
+
+    .hamburger.open span:nth-child(1) {
+        transform: translateY(7px) rotate(45deg);
+    }
+    .hamburger.open span:nth-child(2) {
+        opacity: 0;
+    }
+    .hamburger.open span:nth-child(3) {
+        transform: translateY(-7px) rotate(-45deg);
+    }
+
+    /* ==================== Theme Toggle ==================== */
+    .theme-toggle {
+        width: 36px;
+        height: 36px;
+        border: none;
+        border-radius: 8px;
+        background: var(--color-bg-secondary);
+        color: var(--color-text-secondary);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    .theme-toggle:hover {
+        background: var(--color-bg-tertiary);
+        color: var(--color-text-primary);
+    }
+
+    .theme-toggle svg {
+        position: absolute;
+        transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+
+    .icon-sun, .icon-moon, .icon-system {
+        opacity: 0;
+        transform: scale(0.8);
+        pointer-events: none;
+    }
+
+    .icon-system {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    html[data-theme-setting="light"] .icon-system { opacity: 0; transform: scale(0.8); }
+    html[data-theme-setting="light"] .icon-moon { opacity: 1; transform: scale(1); }
+    html[data-theme-setting="dark"] .icon-system { opacity: 0; transform: scale(0.8); }
+    html[data-theme-setting="dark"] .icon-sun { opacity: 1; transform: scale(1); }
+    html[data-theme-setting="system"] .icon-system { opacity: 1; transform: scale(1); }
+
+    /* ==================== Hero ==================== */
+    .hero {
+        padding: 120px 0 80px;
+        text-align: center;
+        background: var(--hero-gradient);
+    }
+
+    .hero-content {
+        max-width: 700px;
+        margin: 0 auto;
+    }
+
+    .hero h1 {
+        font-size: 4rem;
+        font-weight: 700;
+        color: var(--color-text-primary);
+        margin-bottom: 20px;
+        line-height: 1.1;
+    }
+
+    .hero h1 .accent {
+        background: linear-gradient(135deg, #7C3AED 0%, #F59E0B 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .subtitle {
+        font-size: 1.25rem;
+        color: var(--color-text-secondary);
+        max-width: 560px;
+        margin: 0 auto 32px;
+        line-height: 1.6;
+    }
+
+    .hero-buttons {
+        display: flex;
+        gap: 16px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        padding: 12px 28px;
+        border-radius: 10px;
+        font-size: 1rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .btn:hover {
+        transform: translateY(-2px);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%);
+        color: #ffffff;
+        box-shadow: 0 4px 16px rgba(124, 58, 237, 0.3);
+    }
+
+    .btn-primary:hover {
+        box-shadow: 0 8px 24px rgba(124, 58, 237, 0.4);
+        color: #ffffff;
+    }
+
+    .btn-secondary {
+        background: var(--color-bg-secondary);
+        color: var(--color-text-primary);
+        border: 1px solid var(--color-border);
+    }
+
+    .btn-secondary:hover {
+        box-shadow: 0 4px 16px var(--color-shadow);
+        color: var(--color-text-primary);
+    }
+
+    /* ==================== Pillars ==================== */
+    .pillars {
+        background: var(--color-bg-primary);
+    }
+
+    .pillars h2 {
+        text-align: center;
+        margin-bottom: 48px;
+    }
+
+    .pillars-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 32px;
+    }
+
+    .pillar-card {
+        text-align: center;
+        padding: 40px 28px;
+        border-radius: 16px;
+        background: var(--color-card-bg);
+        border: 1px solid var(--color-border);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .pillar-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 40px var(--color-shadow);
+    }
+
+    .pillar-icon {
+        width: 64px;
+        height: 64px;
+        margin: 0 auto 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #7C3AED 0%, #F59E0B 100%);
+        border-radius: 16px;
+        color: white;
+    }
+
+    .pillar-card h3 {
+        margin-bottom: 12px;
+        color: var(--color-text-primary);
+    }
+
+    .pillar-card p {
+        font-size: 0.95rem;
+        color: var(--color-text-secondary);
+        line-height: 1.6;
+    }
+
+    /* ==================== Feature Grid ==================== */
+    .feature-grid-section {
+        background: var(--color-bg-secondary);
+    }
+
+    .feature-grid-section h2 {
+        text-align: center;
+        margin-bottom: 8px;
+    }
+
+    .section-subtitle {
+        text-align: center;
+        color: var(--color-text-secondary);
+        margin-bottom: 48px;
+        font-size: 1.1rem;
+    }
+
+    .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+    }
+
+    .feature-card {
+        padding: 24px;
+        border-radius: 12px;
+        background: var(--color-card-bg);
+        border: 1px solid var(--color-border);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px var(--color-shadow);
+    }
+
+    .feature-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+    }
+
+    .feature-icon-small {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--color-accent-light);
+        border-radius: 10px;
+        color: var(--color-accent);
+    }
+
+    .tag {
+        font-size: 0.7rem;
+        font-weight: 600;
+        padding: 3px 8px;
+        border-radius: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .tag-gui {
+        background: var(--tag-gui-bg);
+        color: var(--tag-gui-text);
+    }
+
+    .tag-tui {
+        background: var(--tag-tui-bg);
+        color: var(--tag-tui-text);
+    }
+
+    .tag-both {
+        background: var(--tag-both-bg);
+        color: var(--tag-both-text);
+    }
+
+    .feature-card h3 {
+        font-size: 1.05rem;
+        margin-bottom: 6px;
+    }
+
+    .feature-card p {
+        font-size: 0.875rem;
+        color: var(--color-text-secondary);
+        line-height: 1.5;
+    }
+
+    /* ==================== Screenshots / Carousel ==================== */
+    .screenshots {
+        background: var(--color-bg-primary);
+    }
+
+    .screenshots h2 {
+        text-align: center;
+        margin-bottom: 48px;
+    }
+
+    .carousel {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .carousel-track-container {
+        overflow: hidden;
+        flex: 1;
+        border-radius: 12px;
+    }
+
+    .carousel-track {
+        display: flex;
+        transition: transform 0.4s ease;
+    }
+
+    .carousel-slide {
+        min-width: 100%;
+        text-align: center;
+        padding: 0 8px;
+        box-sizing: border-box;
+    }
+
+    .carousel-slide img {
+        width: 100%;
+        height: auto;
+        border-radius: 12px;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
+        cursor: zoom-in;
+    }
+
+    .carousel-slide p {
+        margin-top: 16px;
+        font-size: 0.95rem;
+        color: var(--color-text-secondary);
+        font-weight: 500;
+    }
+
+    .carousel-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: none;
+        background: var(--color-bg-secondary);
+        color: var(--color-text-primary);
+        cursor: pointer;
+        box-shadow: 0 4px 12px var(--color-shadow);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        flex-shrink: 0;
+    }
+
+    .carousel-btn:hover {
+        transform: scale(1.05);
+        box-shadow: 0 6px 20px var(--color-shadow-strong);
+    }
+
+    .carousel-dots {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 24px;
+    }
+
+    .carousel-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        border: none;
+        background: var(--color-text-muted);
+        cursor: pointer;
+        transition: background 0.2s ease, transform 0.2s ease;
+    }
+
+    .carousel-dot.active {
+        background: var(--color-accent);
+        transform: scale(1.2);
+    }
+
+    /* Lightbox */
+    .lightbox {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .lightbox.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .lightbox-image {
+        max-width: 90%;
+        max-height: 90%;
+        border-radius: 8px;
+        transform: scale(0.9);
+        transition: transform 0.3s ease;
+    }
+
+    .lightbox.active .lightbox-image {
+        transform: scale(1);
+    }
+
+    .lightbox-close {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        width: 44px;
+        height: 44px;
+        border: none;
+        background: rgba(255, 255, 255, 0.1);
+        color: #ffffff;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s ease;
+    }
+
+    .lightbox-close:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .lightbox-nav {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 56px;
+        height: 56px;
+        border: none;
+        background: rgba(255, 255, 255, 0.1);
+        color: #ffffff;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s ease;
+    }
+
+    .lightbox-nav:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .lightbox-prev { left: 20px; }
+    .lightbox-next { right: 20px; }
+
+    /* ==================== Architecture ==================== */
+    .architecture {
+        background: var(--color-bg-primary);
+    }
+
+    .architecture h2 {
+        text-align: center;
+        margin-bottom: 8px;
+    }
+
+    .arch-diagram {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .arch-top-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+
+    .arch-box {
+        padding: 28px;
+        border-radius: 12px;
+        border: 2px solid var(--color-border);
+        background: var(--color-card-bg);
+    }
+
+    .arch-box h3 {
+        margin-bottom: 4px;
+    }
+
+    .arch-tech {
+        font-size: 0.8rem;
+        color: var(--color-text-muted);
+        margin-bottom: 16px;
+        font-family: 'SF Mono', 'Fira Code', monospace;
+    }
+
+    .arch-box ul {
+        list-style: none;
+        padding: 0;
+    }
+
+    .arch-box ul li {
+        font-size: 0.9rem;
+        color: var(--color-text-secondary);
+        padding: 3px 0;
+        padding-left: 16px;
+        position: relative;
+    }
+
+    .arch-box ul li::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 50%;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        transform: translateY(-50%);
+    }
+
+    .arch-gui {
+        border-color: var(--color-accent);
+    }
+
+    .arch-gui ul li::before {
+        background: var(--color-accent);
+    }
+
+    .arch-tui {
+        border-color: var(--color-accent-secondary);
+    }
+
+    .arch-tui ul li::before {
+        background: var(--color-accent-secondary);
+    }
+
+    .arch-arrows {
+        display: flex;
+        justify-content: center;
+        gap: 200px;
+        padding: 12px 0;
+        color: var(--color-text-muted);
+    }
+
+    .arch-arrows-single {
+        gap: 0;
+    }
+
+    /* Core container — wraps all three sub-layers */
+    .arch-core-container {
+        border: 2px solid #10B981;
+        border-radius: 12px;
+        background: var(--color-card-bg);
+        overflow: hidden;
+    }
+
+    .arch-core-header {
+        text-align: center;
+        padding: 20px 28px 0;
+    }
+
+    .arch-core-header h3 {
+        margin-bottom: 4px;
+    }
+
+    .arch-core-header .arch-tech {
+        margin-bottom: 16px;
+    }
+
+    .arch-core-layers {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        padding: 0 16px 16px;
+    }
+
+    .arch-core-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+
+    .arch-layer {
+        padding: 14px 16px;
+        border-radius: 8px;
+    }
+
+    .arch-layer-label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        margin-bottom: 10px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .arch-layer-chips {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .arch-chip {
+        font-size: 0.8rem;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-weight: 500;
+    }
+
+    /* Services layer — violet */
+    .arch-layer-services {
+        background: var(--tag-gui-bg);
+    }
+
+    .arch-layer-services .arch-layer-label {
+        color: var(--tag-gui-text);
+    }
+
+    .arch-chip-services {
+        background: rgba(124, 58, 237, 0.15);
+        color: var(--tag-gui-text);
+    }
+
+    :global([data-theme="dark"]) .arch-chip-services {
+        background: rgba(167, 139, 250, 0.2);
+    }
+
+    /* Async/background layer — amber */
+    .arch-layer-async {
+        background: var(--tag-tui-bg);
+    }
+
+    .arch-layer-async .arch-layer-label {
+        color: var(--tag-tui-text);
+    }
+
+    .arch-chip-async {
+        background: rgba(245, 158, 11, 0.15);
+        color: var(--tag-tui-text);
+    }
+
+    :global([data-theme="dark"]) .arch-chip-async {
+        background: rgba(251, 191, 36, 0.2);
+    }
+
+    /* Persistence container — standalone layer below core */
+    .arch-persistence-container {
+        border: 2px solid #10B981;
+        border-radius: 12px;
+        background: var(--color-card-bg);
+        padding: 16px;
+    }
+
+    /* Persistence layer — green */
+    .arch-layer-persistence {
+        background: var(--tag-both-bg);
+    }
+
+    .arch-layer-persistence .arch-layer-label {
+        color: var(--tag-both-text);
+    }
+
+    .arch-chip-persistence {
+        background: rgba(16, 185, 129, 0.15);
+        color: var(--tag-both-text);
+    }
+
+    :global([data-theme="dark"]) .arch-chip-persistence {
+        background: rgba(52, 211, 153, 0.2);
+    }
+
+    /* ==================== Getting Started ==================== */
+    .getting-started {
+        background: var(--color-bg-secondary);
+    }
+
+    .getting-started h2 {
+        text-align: center;
+        margin-bottom: 8px;
+    }
+
+    .getting-started-panels {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .gs-panel {
+        background: var(--color-card-bg);
+        border: 1px solid var(--color-border);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .gs-panel-full {
+        max-width: 800px;
+        margin: 0 auto 24px;
+    }
+
+    .gs-panel-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 16px 20px;
+        background: var(--color-bg-tertiary);
+        border-bottom: 1px solid var(--color-border);
+        color: var(--color-text-primary);
+    }
+
+    .gs-panel-header h3 {
+        font-size: 1rem;
+        margin: 0;
+    }
+
+    .gs-steps {
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .gs-step {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .gs-step code {
+        display: block;
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+    }
+
+    .gs-step span {
+        font-size: 0.8rem;
+        color: var(--color-text-muted);
+        padding-left: 4px;
+    }
+
+    /* ==================== Downloads ==================== */
+    .downloads {
+        background: var(--color-bg-primary);
+        text-align: center;
+    }
+
+    .downloads h2 {
+        margin-bottom: 8px;
+    }
+
+    .download-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .download-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        padding: 28px 20px;
+        border-radius: 12px;
+        background: var(--color-card-bg);
+        border: 1px solid var(--color-border);
+        text-decoration: none;
+        color: var(--color-text-primary);
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .download-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 32px var(--color-shadow);
+        border-color: var(--color-accent);
+        color: var(--color-text-primary);
+    }
+
+    .download-icon {
+        width: 56px;
+        height: 56px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--color-accent-light);
+        border-radius: 14px;
+        color: var(--color-accent);
+    }
+
+    .download-info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .download-label {
+        font-weight: 600;
+        font-size: 1rem;
+    }
+
+    .download-sublabel {
+        font-size: 0.8rem;
+        color: var(--color-text-muted);
+    }
+
+    .download-arrow {
+        color: var(--color-text-muted);
+        transition: transform 0.2s ease, color 0.2s ease;
+    }
+
+    .download-card:hover .download-arrow {
+        color: var(--color-accent);
+        transform: translateX(4px);
+    }
+
+    /* ==================== Active Development ==================== */
+    .active-dev {
+        padding: 40px 0;
+        background: var(--color-bg-primary);
+    }
+
+    .active-dev-banner {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 20px 28px;
+        background: var(--color-accent-light);
+        border-radius: 12px;
+        border: 1px solid rgba(124, 58, 237, 0.2);
+        flex-wrap: wrap;
+    }
+
+    .active-dev-banner > svg {
+        color: var(--color-accent);
+        flex-shrink: 0;
+    }
+
+    .active-dev-banner > span {
+        font-weight: 500;
+        color: var(--color-text-primary);
+    }
+
+    .active-dev-links {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-left: 8px;
+        padding-left: 12px;
+        border-left: 1px solid rgba(124, 58, 237, 0.3);
+    }
+
+    .active-dev-links a {
+        font-size: 0.9rem;
+        color: var(--color-accent);
+        font-weight: 500;
+    }
+
+    .active-dev-links a:hover {
+        text-decoration: underline;
+    }
+
+    .link-sep {
+        color: var(--color-accent);
+    }
+
+    /* ==================== Tip Jar ==================== */
+    .tip-jar {
+        text-align: center;
+        background: var(--color-bg-secondary);
+    }
+
+    .tip-jar h2 {
+        margin-bottom: 12px;
+    }
+
+    .tip-subtitle {
+        color: var(--color-text-secondary);
+        margin-bottom: 32px;
+        max-width: 480px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .bmc-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 28px;
+        background: #ffdd00;
+        color: #000000;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 1rem;
+        text-decoration: none;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .bmc-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(255, 221, 0, 0.4);
+        color: #000000;
+    }
+
+    /* ==================== Footer ==================== */
+    .footer {
+        padding: 40px 0;
+        text-align: center;
+        border-top: 1px solid var(--color-border);
+        background: var(--color-bg-primary);
+    }
+
+    .footer-content {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        align-items: center;
+    }
+
+    .footer-links {
+        display: flex;
+        gap: 24px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .footer-links a {
+        font-size: 0.875rem;
+        color: var(--color-text-secondary);
+    }
+
+    .footer-links a:hover {
+        color: var(--color-text-primary);
+    }
+
+    .footer-copy {
+        font-size: 0.8rem;
+        color: var(--color-text-muted);
+    }
+
+    /* ==================== Responsive ==================== */
+    @media (max-width: 1023px) {
+        .pillars-grid {
+            grid-template-columns: 1fr;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .feature-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .download-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .arch-arrows {
+            gap: 100px;
+        }
+    }
+
+    @media (max-width: 639px) {
+        .header-nav {
+            display: none;
+            position: absolute;
+            top: 64px;
+            left: 0;
+            right: 0;
+            background: var(--color-bg-primary);
+            border-bottom: 1px solid var(--color-border);
+            flex-direction: column;
+            padding: 16px 24px;
+            gap: 16px;
+        }
+
+        .header-nav.open {
+            display: flex;
+        }
+
+        .hamburger {
+            display: flex;
+        }
+
+        .hero {
+            padding: 80px 0 60px;
+        }
+
+        .hero h1 {
+            font-size: 2.5rem;
+        }
+
+        .subtitle {
+            font-size: 1.05rem;
+        }
+
+        .feature-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .arch-top-row,
+        .arch-core-row {
+            grid-template-columns: 1fr;
+        }
+
+        .arch-arrows {
+            gap: 40px;
+        }
+
+        .getting-started-panels {
+            grid-template-columns: 1fr;
+        }
+
+        .download-grid {
+            grid-template-columns: 1fr;
+            max-width: 320px;
+        }
+
+        .active-dev-banner {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .active-dev-links {
+            margin-left: 0;
+            padding-left: 0;
+            border-left: none;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .carousel-btn {
+            width: 32px;
+            height: 32px;
+        }
+    }
+</style>
+
+<script>
+    // Theme toggle
+    (function() {
+        const themes = ['light', 'dark', 'system'];
+
+        function getSystemTheme() {
+            return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+
+        function applyTheme(theme: string) {
+            const resolved = theme === 'system' ? getSystemTheme() : theme;
+            document.documentElement.setAttribute('data-theme', resolved);
+            document.documentElement.setAttribute('data-theme-setting', theme);
+        }
+
+        // System theme change listener
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+            const saved = localStorage.getItem('theme') || 'system';
+            if (saved === 'system') applyTheme('system');
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Theme toggle button
+            const toggleBtn = document.getElementById('theme-toggle');
+            toggleBtn?.addEventListener('click', () => {
+                const current = document.documentElement.getAttribute('data-theme-setting') || 'system';
+                const next = themes[(themes.indexOf(current) + 1) % themes.length];
+                localStorage.setItem('theme', next);
+                applyTheme(next);
+            });
+
+            // Hamburger menu
+            const hamburger = document.getElementById('hamburger');
+            const nav = document.getElementById('header-nav');
+            hamburger?.addEventListener('click', () => {
+                hamburger.classList.toggle('open');
+                nav?.classList.toggle('open');
+            });
+
+            // Close mobile nav on link click
+            nav?.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', () => {
+                    hamburger?.classList.remove('open');
+                    nav.classList.remove('open');
+                });
+            });
+
+            // Carousel (only if screenshots exist)
+            const track = document.querySelector('.carousel-track') as HTMLElement;
+            const slides = document.querySelectorAll('.carousel-slide');
+            if (track && slides.length > 0) {
+                const prevBtn = document.querySelector('.carousel-btn-prev');
+                const nextBtn = document.querySelector('.carousel-btn-next');
+                const dotsContainer = document.querySelector('.carousel-dots');
+                const lightbox = document.getElementById('lightbox');
+                const lightboxImage = document.getElementById('lightbox-image') as HTMLImageElement;
+                const lightboxClose = document.querySelector('.lightbox-close');
+                const carouselEl = document.querySelector('.carousel') as HTMLElement;
+                const autoplayEnabled = carouselEl?.dataset.autoplay === 'true';
+                const autoplayInterval = parseInt(carouselEl?.dataset.autoplayInterval || '5000', 10);
+                const lightboxNavEnabled = carouselEl?.dataset.lightboxNav === 'true';
+
+                let currentIndex = 0;
+                const totalSlides = slides.length;
+                let autoplayTimer: number | null = null;
+                let isAutoplayPaused = false;
+
+                // Create dots
+                slides.forEach((_, i) => {
+                    const dot = document.createElement('button');
+                    dot.classList.add('carousel-dot');
+                    if (i === 0) dot.classList.add('active');
+                    dot.setAttribute('aria-label', `Go to slide ${i + 1}`);
+                    dot.addEventListener('click', () => { goToSlide(i); resetAutoplay(); });
+                    dotsContainer?.appendChild(dot);
+                });
+
+                const dots = document.querySelectorAll('.carousel-dot');
+
+                function updateCarousel() {
+                    track.style.transform = `translateX(-${currentIndex * 100}%)`;
+                    dots.forEach((d, i) => d.classList.toggle('active', i === currentIndex));
+                }
+
+                function goToSlide(i: number) { currentIndex = i; updateCarousel(); }
+                function nextSlide() { currentIndex = (currentIndex + 1) % totalSlides; updateCarousel(); }
+                function prevSlide() { currentIndex = (currentIndex - 1 + totalSlides) % totalSlides; updateCarousel(); }
+
+                function startAutoplay() { if (autoplayEnabled && !autoplayTimer && !isAutoplayPaused) autoplayTimer = window.setInterval(nextSlide, autoplayInterval); }
+                function stopAutoplay() { if (autoplayTimer) { clearInterval(autoplayTimer); autoplayTimer = null; } }
+                function resetAutoplay() { stopAutoplay(); startAutoplay(); }
+
+                startAutoplay();
+                carouselEl?.addEventListener('mouseenter', stopAutoplay);
+                carouselEl?.addEventListener('mouseleave', () => { if (!isAutoplayPaused) startAutoplay(); });
+
+                prevBtn?.addEventListener('click', () => { prevSlide(); resetAutoplay(); });
+                nextBtn?.addEventListener('click', () => { nextSlide(); resetAutoplay(); });
+
+                // Lightbox
+                function openLightbox(src: string, alt: string) {
+                    if (lightboxImage && lightbox) {
+                        lightboxImage.src = src;
+                        lightboxImage.alt = alt;
+                        lightbox.classList.add('active');
+                        document.body.style.overflow = 'hidden';
+                        stopAutoplay();
+                    }
+                }
+
+                function closeLightbox() {
+                    lightbox?.classList.remove('active');
+                    document.body.style.overflow = '';
+                    if (!isAutoplayPaused) startAutoplay();
+                }
+
+                function updateLightboxImage() {
+                    const img = slides[currentIndex]?.querySelector('img');
+                    if (img && lightboxImage) { lightboxImage.src = img.src; lightboxImage.alt = img.alt; }
+                }
+
+                slides.forEach((slide, i) => {
+                    slide.querySelector('img')?.addEventListener('click', () => {
+                        currentIndex = i; updateCarousel(); openLightbox((slide.querySelector('img') as HTMLImageElement).src, (slide.querySelector('img') as HTMLImageElement).alt);
+                    });
+                });
+
+                const lightboxPrevBtn = document.querySelector('.lightbox-prev');
+                const lightboxNextBtn = document.querySelector('.lightbox-next');
+                lightboxPrevBtn?.addEventListener('click', (e) => { e.stopPropagation(); currentIndex = (currentIndex - 1 + totalSlides) % totalSlides; updateCarousel(); updateLightboxImage(); });
+                lightboxNextBtn?.addEventListener('click', (e) => { e.stopPropagation(); currentIndex = (currentIndex + 1) % totalSlides; updateCarousel(); updateLightboxImage(); });
+                lightboxClose?.addEventListener('click', closeLightbox);
+                lightbox?.addEventListener('click', (e) => { if (e.target === lightbox) closeLightbox(); });
+
+                document.addEventListener('keydown', (e) => {
+                    if (lightbox?.classList.contains('active')) {
+                        if (e.key === 'Escape') closeLightbox();
+                        if (lightboxNavEnabled && e.key === 'ArrowLeft') { currentIndex = (currentIndex - 1 + totalSlides) % totalSlides; updateCarousel(); updateLightboxImage(); }
+                        if (lightboxNavEnabled && e.key === 'ArrowRight') { currentIndex = (currentIndex + 1) % totalSlides; updateCarousel(); updateLightboxImage(); }
+                    } else if (document.querySelector('.carousel')) {
+                        if (e.key === 'ArrowLeft') { prevSlide(); resetAutoplay(); }
+                        if (e.key === 'ArrowRight') { nextSlide(); resetAutoplay(); }
+                    }
+                });
+            }
+        });
+    })();
+</script>

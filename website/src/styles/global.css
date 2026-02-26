@@ -1,0 +1,169 @@
+/* Theme Variables */
+:root {
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #f8f9fc;
+  --color-bg-tertiary: #eef0f5;
+  --color-text-primary: #1a1a2e;
+  --color-text-secondary: #6b7280;
+  --color-text-muted: #9ca3af;
+  --color-text-paragraph: #374151;
+  --color-border: #e5e7eb;
+  --color-accent: #7C3AED;
+  --color-accent-secondary: #F59E0B;
+  --color-accent-light: rgba(124, 58, 237, 0.1);
+  --color-link: #7C3AED;
+  --color-link-hover: #6D28D9;
+  --color-card-bg: #ffffff;
+  --color-shadow: rgba(0, 0, 0, 0.06);
+  --color-shadow-strong: rgba(0, 0, 0, 0.12);
+  --hero-gradient: linear-gradient(180deg, #f5f3ff 0%, #ffffff 100%);
+  --code-bg: #f3f4f6;
+  --code-text: #1f2937;
+  --tag-gui-bg: rgba(124, 58, 237, 0.1);
+  --tag-gui-text: #7C3AED;
+  --tag-tui-bg: rgba(245, 158, 11, 0.1);
+  --tag-tui-text: #D97706;
+  --tag-both-bg: rgba(16, 185, 129, 0.1);
+  --tag-both-text: #059669;
+}
+
+[data-theme="dark"] {
+  --color-bg-primary: #0f0f1a;
+  --color-bg-secondary: #1a1a2e;
+  --color-bg-tertiary: #252540;
+  --color-text-primary: #f1f5f9;
+  --color-text-secondary: #94a3b8;
+  --color-text-muted: #64748b;
+  --color-text-paragraph: #cbd5e1;
+  --color-border: #334155;
+  --color-accent: #a78bfa;
+  --color-accent-secondary: #fbbf24;
+  --color-accent-light: rgba(167, 139, 250, 0.15);
+  --color-link: #a78bfa;
+  --color-link-hover: #c4b5fd;
+  --color-card-bg: #1a1a2e;
+  --color-shadow: rgba(0, 0, 0, 0.3);
+  --color-shadow-strong: rgba(0, 0, 0, 0.5);
+  --hero-gradient: linear-gradient(180deg, #1a1a2e 0%, #0f0f1a 100%);
+  --code-bg: #1e1e32;
+  --code-text: #e2e8f0;
+  --tag-gui-bg: rgba(167, 139, 250, 0.15);
+  --tag-gui-text: #c4b5fd;
+  --tag-tui-bg: rgba(251, 191, 36, 0.15);
+  --tag-tui-text: #fbbf24;
+  --tag-both-bg: rgba(52, 211, 153, 0.15);
+  --tag-both-text: #6ee7b7;
+}
+
+/* Reset and base styles */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  min-height: 100vh;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+h1 {
+  font-size: 3.5rem;
+  font-weight: 700;
+}
+
+h2 {
+  font-size: 2.5rem;
+}
+
+h3 {
+  font-size: 1.25rem;
+}
+
+p {
+  color: var(--color-text-paragraph);
+}
+
+a {
+  color: var(--color-link);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: var(--color-link-hover);
+}
+
+code {
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  background: var(--code-bg);
+  color: var(--code-text);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.875em;
+}
+
+/* Container */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* Section spacing */
+section {
+  padding: 80px 0;
+}
+
+/* Responsive base */
+@media (max-width: 768px) {
+  html {
+    font-size: 14px;
+  }
+
+  h1 {
+    font-size: 2.5rem;
+  }
+
+  h2 {
+    font-size: 2rem;
+  }
+
+  section {
+    padding: 60px 0;
+  }
+}
+
+@media (max-width: 480px) {
+  h1 {
+    font-size: 2rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+
+  section {
+    padding: 40px 0;
+  }
+}

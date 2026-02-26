@@ -230,6 +230,12 @@ CLI args → JobService::get_job() → JobExecutor::execute() → mpsc channel
     → blocking recv() loop → stdout/stderr → exit code
 ```
 
-## Database
+## Persistence
 
-SQLite via `rusqlite` with bundled SQLite. Database file location: `{app_data_dir}/rsync-studio.db`. Tables are created on first launch. Foreign key cascades handle cleanup (deleting a job removes its invocations and snapshots).
+### SQLite
+
+SQLite via `rusqlite` with bundled SQLite. Database file location: `{app_data_dir}/rsync-studio.db`. Tables are created on first launch. Foreign key cascades handle cleanup (deleting a job removes its invocations and snapshots). Stores jobs, invocations, snapshots, run statistics, and app settings.
+
+### Log Files
+
+Plain-text log files are written to a configurable directory (the `log_directory` app setting, defaults to `{app_data_dir}/logs/`). Each job invocation produces one file named `{invocation_id}.log` containing timestamped rsync output. The log file path is recorded on the `invocations` table so the UI can retrieve it later. Log files are cleaned up alongside their invocations when history retention runs.

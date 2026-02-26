@@ -23,5 +23,8 @@ dist/
 src-tauri/icons/android/
 src-tauri/icons/ios/
 
+# Website
+website/.astro/
+
 # macOS
 .DS_Store
