@@ -2,21 +2,8 @@ use std::fs;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
 
-use serde::{Deserialize, Serialize};
-
 use crate::error::AppError;
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct ScrubScanResult {
-    pub file_path: String,
-    pub match_count: usize,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct ScrubApplyResult {
-    pub file_path: String,
-    pub replacements: usize,
-}
+use crate::models::scrubber::{ScrubApplyResult, ScrubScanResult};
 
 /// Scan all `.log` files in `log_dir` for occurrences of `pattern`.
 /// Returns a list of files that contain the pattern, with match counts.

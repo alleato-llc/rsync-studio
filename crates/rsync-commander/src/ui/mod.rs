@@ -1,15 +1,19 @@
-pub mod about;
-pub mod history;
-pub mod job_form;
-pub mod job_output;
-pub mod jobs;
-pub mod popup;
-pub mod settings;
-pub mod statistics;
-pub mod status_bar;
-pub mod tabs;
-pub mod text_input;
-pub mod tools;
+pub mod pages;
+pub mod widgets;
+
+// Re-exports for internal use
+pub use pages::about;
+pub use pages::history;
+pub use pages::job_form;
+pub use pages::job_output;
+pub use pages::jobs;
+pub use pages::settings;
+pub use pages::statistics;
+pub use pages::tools;
+pub use widgets::popup;
+pub use widgets::status_bar;
+pub use widgets::tabs;
+pub use widgets::text_input;
 
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
@@ -31,20 +35,20 @@ pub fn draw(f: &mut Frame, app: &App) {
     status_bar::draw_status_bar(f, app, chunks[2]);
 
     // Popup takes priority over everything
-    if let Some(ref popup_kind) = app.popup {
+    if let Some(ref popup_kind) = app.overlays.popup {
         draw_page(f, app, chunks[1]);
         popup::draw_popup(f, popup_kind, chunks[1]);
         return;
     }
 
     // Job output viewer overlays the main content
-    if app.job_output.is_some() {
+    if app.overlays.job_output.is_some() {
         job_output::draw_job_output(f, app, chunks[1]);
         return;
     }
 
     // Job form overlays the main content
-    if app.job_form.is_some() {
+    if app.overlays.job_form.is_some() {
         job_form::draw_job_form(f, app, chunks[1]);
         return;
     }

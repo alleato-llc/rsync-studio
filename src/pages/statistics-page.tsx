@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import type { AggregatedStats } from "@/types/statistics";
+import type { AggregatedStats } from "@/types/execution/statistics";
 import * as api from "@/lib/tauri";
 import {
   Card,

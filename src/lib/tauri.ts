@@ -1,11 +1,12 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { JobDefinition } from "@/types/job";
-import type { BackupInvocation, SnapshotRecord } from "@/types/backup";
+import type { BackupInvocation, SnapshotRecord } from "@/types/execution/backup";
 import type { CommandExplanation } from "@/types/command";
-import type { AggregatedStats } from "@/types/statistics";
+import type { AggregatedStats } from "@/types/execution/statistics";
 import type { PreflightResult } from "@/types/validation";
-import type { LogFileChunk } from "@/types/log-file";
+import type { LogFileChunk } from "@/types/execution/log-file";
 import type { ScrubScanResult, ScrubApplyResult } from "@/types/scrubber";
+import type { RetentionSettings, DryModeSettings } from "@/types/settings";
 
 export async function listJobs(): Promise<JobDefinition[]> {
   return invoke<JobDefinition[]>("list_jobs");
@@ -122,11 +123,6 @@ export async function setLogDirectory(path: string): Promise<void> {
   return invoke<void>("set_log_directory", { path });
 }
 
-export interface RetentionSettings {
-  max_log_age_days: number;
-  max_history_per_job: number;
-}
-
 export async function getRetentionSettings(): Promise<RetentionSettings> {
   return invoke<RetentionSettings>("get_retention_settings");
 }
@@ -161,11 +157,6 @@ export async function setMaxItemizedChanges(value: number): Promise<void> {
 }
 
 // --- Dry mode settings ---
-
-export interface DryModeSettings {
-  itemize_changes: boolean;
-  checksum: boolean;
-}
 
 export async function getDryModeSettings(): Promise<DryModeSettings> {
   return invoke<DryModeSettings>("get_dry_mode_settings");
@@ -213,6 +204,32 @@ export async function getNasAutoDetect(): Promise<boolean> {
 
 export async function setNasAutoDetect(enabled: boolean): Promise<void> {
   return invoke<void>("set_nas_auto_detect", { enabled });
+}
+
+// --- Advanced rsync option group visibility ---
+
+export async function getShowFileHandlingOptions(): Promise<boolean> {
+  return invoke<boolean>("get_show_file_handling_options");
+}
+
+export async function setShowFileHandlingOptions(enabled: boolean): Promise<void> {
+  return invoke<void>("set_show_file_handling_options", { enabled });
+}
+
+export async function getShowMetadataOptions(): Promise<boolean> {
+  return invoke<boolean>("get_show_metadata_options");
+}
+
+export async function setShowMetadataOptions(enabled: boolean): Promise<void> {
+  return invoke<void>("set_show_metadata_options", { enabled });
+}
+
+export async function getShowOutputOptions(): Promise<boolean> {
+  return invoke<boolean>("get_show_output_options");
+}
+
+export async function setShowOutputOptions(enabled: boolean): Promise<void> {
+  return invoke<void>("set_show_output_options", { enabled });
 }
 
 // --- Filesystem detection ---

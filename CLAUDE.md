@@ -39,7 +39,7 @@ npx tsc --noEmit               # TypeScript type-check only
 
 # Rust
 cargo build --workspace        # Build all crates
-cargo test -p rsync-core       # Run all tests (254 tests)
+cargo test -p rsync-core       # Run all tests (291 tests)
 cargo test -p rsync-core -- <test_name>  # Run specific test
 
 # Tauri (GUI)
@@ -73,7 +73,7 @@ Some features have both layers: an app-level setting controlling the feature glo
 Job execution orchestration (log writing, statistics, snapshots) lives in `rsync-core`'s `JobExecutor`. The `ExecutionEventHandler` trait decouples it from any frontend: GUI implements with `AppHandle.emit()`, TUI implements with `mpsc::Sender`. If you modify execution behavior, change `job_executor.rs` — not the frontend wrappers.
 
 ### Shared Command Builder
-`crates/rsync-core/src/services/command_builder.rs` builds rsync argument vectors. Both the Rust `ProcessRsyncClient` and the TypeScript `src/lib/command-preview.ts` mirror this logic. If you modify rsync flag handling, update both. Also update `command_parser.rs` (flag parsing) and `command_explainer.rs` (flag descriptions) if adding new recognized flags.
+`crates/rsync-core/src/services/command/command_builder.rs` builds rsync argument vectors. Both the Rust `ProcessRsyncClient` and the TypeScript `src/lib/command-preview.ts` mirror this logic. If you modify rsync flag handling, update both. Also update `command_parser.rs` (flag parsing) and `command_explainer.rs` (flag descriptions) if adding new recognized flags.
 
 ### Frontend-Backend Type Alignment
 TypeScript types in `src/types/` must stay aligned with Rust models in `crates/rsync-core/src/models/`. The Tauri IPC layer serializes Rust structs as JSON, and the frontend deserializes into these TypeScript types.
@@ -89,8 +89,25 @@ Job forms use `useReducer` with the full `JobDefinition` as state. The reducer a
 - shadcn/ui components live in `src/components/ui/` (do not modify these)
 - Path alias: `@/` maps to `src/` in both TypeScript and Vite config
 - Error types use `thiserror` in Rust; Tauri commands convert errors to `String` for IPC
-- New `RsyncOptions` fields require updates in **7 places**: Rust struct + `Default` impl, `command_builder.rs`, `command_parser.rs`, `command_explainer.rs`, TS `RsyncOptions` interface (`src/types/job.ts`), `src/lib/defaults.ts`, `src/lib/command-preview.ts`
+- `RsyncOptions` is defined in `crates/rsync-core/src/models/rsync_options.rs` and re-exported from `job.rs`. It contains 5 nested sub-structs: `CoreTransferOptions`, `FileHandlingOptions`, `MetadataOptions`, `OutputOptions`, `AdvancedOptions`. New fields require updates in **7 places**: the appropriate sub-struct + `Default` impl in `rsync_options.rs`, `command_builder.rs`, `command_parser.rs`, `command_explainer.rs`, the matching TS sub-interface in `src/types/job.ts`, `src/lib/defaults.ts`, `src/lib/command-preview.ts`
+- Domain models use named sub-structs to stay under the ~10 field limit: `JobDefinition` contains `TransferConfig` (source + destination + backup_mode), `BackupInvocation` contains `TransferStats` (bytes/files transferred) and `ExecutionOutput` (command, exit_code, paths). The TUI `App` struct uses `AppServices`, `PageStates`, and `OverlayState` sub-structs.
 - New `FileSystem` trait methods require stubs in `TestFileSystem` and `MockFs` (preflight.rs)
+- Test files in `crates/rsync-core/src/tests/` are grouped by functional area into subdirectories (e.g., `command/`, `repository/`, `service/`, `fixtures/`). Each subdirectory has its own `mod.rs`. Standalone test files remain in the root.
+- Services in `crates/rsync-core/src/services/` are grouped into subdirectories (`command/`, `execution/`, `retention/`, `scheduling/`) with `pub use` re-exports in the parent `mod.rs` for API stability.
+- Models in `crates/rsync-core/src/models/` use an `execution/` subdirectory for runtime types (backup, progress, log, statistics, itemize).
+- TUI ui modules in `crates/rsync-commander/src/ui/` are grouped into `pages/` and `widgets/` with re-exports.
+- Frontend components in `src/components/jobs/` are grouped into `form/` (job form fields) and `execution/` (execution output views). Types in `src/types/` use `execution/` for runtime types.
+- **No model types in the services layer.** All structs, enums, and type aliases that represent data (i.e., derive Serialize/Deserialize, hold domain data, or are used as IPC/API payloads) belong in `models/`. Services should only contain traits, trait implementations, service structs (holding `Arc` dependencies), and free functions. Service files import model types from `crate::models::*`. Runtime infrastructure types (e.g., `SchedulerHandle` wrapping an `mpsc::Sender`) that are tightly coupled to a trait may remain in the service file.
+
+## Structural Limits
+
+These thresholds are soft guidelines. When a limit is reached, refactor proactively rather than waiting for it to become painful.
+
+- **Max ~8 files per directory.** When a directory exceeds this, group related files into subdirectories with their own `mod.rs` / `index.ts`. (Already enforced for `tests/`; applies equally to `models/`, `services/`, `src/components/`, `src/types/`, etc.)
+- **Max ~10 fields per struct/interface.** When a struct or TypeScript interface exceeds this, group related fields into named sub-structs (e.g., `RsyncOptions` → `CoreTransferOptions` + `FileHandlingOptions` + …). Enum variants with data fields count toward the variant's own limit, not the parent enum.
+- **File names must reflect the primary type or domain.** A Rust file exporting `FooService` should be named `foo_service.rs`; a TypeScript file exporting `BarOptions` should be `bar-options.ts`. Co-located helpers and secondary types are fine, but the file name should make the primary export obvious. Avoid generic names like `utils.rs` or `helpers.ts` for domain-specific code.
+
+**Accepted exceptions:** `src/lib/utils.ts` uses the generic name because it is generated by shadcn/ui — this is an ecosystem convention.
 
 ## Testing
 

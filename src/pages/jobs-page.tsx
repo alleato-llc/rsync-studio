@@ -4,9 +4,9 @@ import { useJobs } from "@/hooks/use-jobs";
 import { useJobExecution } from "@/hooks/use-job-execution";
 import { createDefaultJob } from "@/lib/defaults";
 import { JobList } from "@/components/jobs/job-list";
-import { JobForm } from "@/components/jobs/job-form";
+import { JobForm } from "@/components/jobs/form/job-form";
 import { DeleteJobDialog } from "@/components/jobs/delete-job-dialog";
-import { ExecutionView } from "@/components/jobs/execution-view";
+import { ExecutionView } from "@/components/jobs/execution/execution-view";
 
 type View =
   | { view: "list" }

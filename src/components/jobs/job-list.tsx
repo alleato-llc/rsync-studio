@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { JobDefinition, JobStatus } from "@/types/job";
-import type { ProgressUpdate, LogLine } from "@/types/progress";
+import type { ProgressUpdate, LogLine } from "@/types/execution/progress";
 import { Button } from "@/components/ui/button";
 import { Plus, LayoutGrid, List } from "lucide-react";
 import { JobCard } from "./job-card";

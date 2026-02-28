@@ -27,7 +27,7 @@ export const config = {
       icon: "monitor",
       title: "Visual Rsync Management",
       description:
-        "Configure rsync jobs through an intuitive interface. See a live command preview as you adjust options — no more guessing what flags do.",
+        "Configure rsync jobs through an intuitive interface with categorized flag groups. See a live command preview as you adjust options — no more guessing what flags do.",
     },
     {
       icon: "shield",
@@ -98,7 +98,7 @@ export const config = {
       icon: "code",
       title: "Command Parser",
       description:
-        "Paste any rsync command to see what each flag does. Import commands as new jobs instantly.",
+        "Paste any rsync command to see what each of 100+ flags does. Import commands as new jobs instantly.",
       tag: "Both" as const,
     },
     {

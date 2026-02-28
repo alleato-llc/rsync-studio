@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 use crate::database::sqlite::{from_json, parse_datetime, parse_uuid, to_json};
 use crate::error::AppError;
-use crate::models::job::JobDefinition;
+use crate::models::job::{JobDefinition, TransferConfig};
 use crate::repository::job::JobRepository;
 
 pub struct SqliteJobRepository {
@@ -28,9 +28,9 @@ impl JobRepository for SqliteJobRepository {
                 job.id.to_string(),
                 job.name,
                 job.description,
-                to_json(&job.source)?,
-                to_json(&job.destination)?,
-                to_json(&job.backup_mode)?,
+                to_json(&job.transfer.source)?,
+                to_json(&job.transfer.destination)?,
+                to_json(&job.transfer.backup_mode)?,
                 to_json(&job.options)?,
                 job.ssh_config.as_ref().map(|s| to_json(s)).transpose()?,
                 job.schedule.as_ref().map(|s| to_json(s)).transpose()?,
@@ -93,9 +93,9 @@ impl JobRepository for SqliteJobRepository {
                 rusqlite::params![
                     job.name,
                     job.description,
-                    to_json(&job.source)?,
-                    to_json(&job.destination)?,
-                    to_json(&job.backup_mode)?,
+                    to_json(&job.transfer.source)?,
+                    to_json(&job.transfer.destination)?,
+                    to_json(&job.transfer.backup_mode)?,
                     to_json(&job.options)?,
                     job.ssh_config.as_ref().map(|s| to_json(s)).transpose()?,
                     job.schedule.as_ref().map(|s| to_json(s)).transpose()?,
@@ -143,9 +143,11 @@ fn row_to_job(row: &rusqlite::Row) -> Result<JobDefinition, AppError> {
         id: parse_uuid(&id_str)?,
         name,
         description,
-        source: from_json(&source_json)?,
-        destination: from_json(&dest_json)?,
-        backup_mode: from_json(&mode_json)?,
+        transfer: TransferConfig {
+            source: from_json(&source_json)?,
+            destination: from_json(&dest_json)?,
+            backup_mode: from_json(&mode_json)?,
+        },
         options: from_json(&options_json)?,
         ssh_config: ssh_json.as_deref().map(from_json).transpose()?,
         schedule: schedule_json.as_deref().map(from_json).transpose()?,

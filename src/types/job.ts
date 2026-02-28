@@ -28,29 +28,64 @@ export interface SshConfig {
   custom_ssh_command: string | null;
 }
 
-export interface RsyncOptions {
+export interface CoreTransferOptions {
   archive: boolean;
   compress: boolean;
-  verbose: boolean;
-  delete: boolean;
-  dry_run: boolean;
   partial: boolean;
+  dry_run: boolean;
+}
+
+export interface FileHandlingOptions {
+  delete: boolean;
+  size_only: boolean;
+  checksum: boolean;
+  update: boolean;
+  whole_file: boolean;
+  ignore_existing: boolean;
+  one_file_system: boolean;
+}
+
+export interface MetadataOptions {
+  hard_links: boolean;
+  acls: boolean;
+  xattrs: boolean;
+  numeric_ids: boolean;
+}
+
+export interface OutputOptions {
+  verbose: boolean;
   progress: boolean;
   human_readable: boolean;
+  stats: boolean;
+  itemize_changes: boolean;
+}
+
+export interface AdvancedOptions {
   exclude_patterns: string[];
   include_patterns: string[];
   bandwidth_limit: number | null;
   custom_args: string[];
-  size_only: boolean;
+}
+
+export interface RsyncOptions {
+  core_transfer: CoreTransferOptions;
+  file_handling: FileHandlingOptions;
+  metadata: MetadataOptions;
+  output: OutputOptions;
+  advanced: AdvancedOptions;
+}
+
+export interface TransferConfig {
+  source: StorageLocation;
+  destination: StorageLocation;
+  backup_mode: BackupMode;
 }
 
 export interface JobDefinition {
   id: string;
   name: string;
   description: string | null;
-  source: StorageLocation;
-  destination: StorageLocation;
-  backup_mode: BackupMode;
+  transfer: TransferConfig;
   options: RsyncOptions;
   ssh_config: SshConfig | null;
   schedule: import("./schedule").ScheduleConfig | null;

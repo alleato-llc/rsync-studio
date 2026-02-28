@@ -87,8 +87,8 @@ export function LogScrubber() {
   return (
     <div className="space-y-4">
       <p className="text-muted-foreground">
-        Search log files for sensitive text (passwords, keys, etc.) and replace
-        all occurrences with asterisks.
+        Search job execution logs for sensitive text (passwords, keys, etc.) and
+        replace all occurrences with asterisks.
       </p>
 
       {phase === "input" && (

@@ -1,9 +1,8 @@
 use std::sync::Arc;
 
-use serde::{Deserialize, Serialize};
-
 use crate::error::AppError;
 use crate::models::job::JobDefinition;
+use crate::models::settings::{DryModeSettings, RetentionSettings};
 use crate::repository::settings::SettingsRepository;
 
 const KEY_LOG_DIRECTORY: &str = "log_directory";
@@ -13,6 +12,9 @@ const KEY_AUTO_TRAILING_SLASH: &str = "auto_trailing_slash";
 const KEY_DRY_MODE_ITEMIZE_CHANGES: &str = "dry_mode_itemize_changes";
 const KEY_DRY_MODE_CHECKSUM: &str = "dry_mode_checksum";
 const KEY_NAS_AUTO_DETECT: &str = "nas_auto_detect";
+const KEY_SHOW_FILE_HANDLING_OPTIONS: &str = "show_file_handling_options";
+const KEY_SHOW_METADATA_OPTIONS: &str = "show_metadata_options";
+const KEY_SHOW_OUTPUT_OPTIONS: &str = "show_output_options";
 
 const DEFAULT_NAS_AUTO_DETECT: bool = true;
 
@@ -20,18 +22,6 @@ const DEFAULT_AUTO_TRAILING_SLASH: bool = true;
 
 const DEFAULT_MAX_LOG_AGE_DAYS: u32 = 90;
 const DEFAULT_MAX_HISTORY_PER_JOB: usize = 15;
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct RetentionSettings {
-    pub max_log_age_days: u32,
-    pub max_history_per_job: usize,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct DryModeSettings {
-    pub itemize_changes: bool,
-    pub checksum: bool,
-}
 
 pub struct SettingsService {
     settings: Arc<dyn SettingsRepository>,
@@ -149,27 +139,60 @@ impl SettingsService {
         )?;
         Ok(())
     }
+
+    pub fn get_show_file_handling_options(&self) -> Result<bool, AppError> {
+        Ok(self
+            .settings
+            .get_setting(KEY_SHOW_FILE_HANDLING_OPTIONS)?
+            .map(|v| v == "true")
+            .unwrap_or(false))
+    }
+
+    pub fn set_show_file_handling_options(&self, enabled: bool) -> Result<(), AppError> {
+        self.settings.set_setting(
+            KEY_SHOW_FILE_HANDLING_OPTIONS,
+            if enabled { "true" } else { "false" },
+        )
+    }
+
+    pub fn get_show_metadata_options(&self) -> Result<bool, AppError> {
+        Ok(self
+            .settings
+            .get_setting(KEY_SHOW_METADATA_OPTIONS)?
+            .map(|v| v == "true")
+            .unwrap_or(false))
+    }
+
+    pub fn set_show_metadata_options(&self, enabled: bool) -> Result<(), AppError> {
+        self.settings.set_setting(
+            KEY_SHOW_METADATA_OPTIONS,
+            if enabled { "true" } else { "false" },
+        )
+    }
+
+    pub fn get_show_output_options(&self) -> Result<bool, AppError> {
+        Ok(self
+            .settings
+            .get_setting(KEY_SHOW_OUTPUT_OPTIONS)?
+            .map(|v| v == "true")
+            .unwrap_or(false))
+    }
+
+    pub fn set_show_output_options(&self, enabled: bool) -> Result<(), AppError> {
+        self.settings.set_setting(
+            KEY_SHOW_OUTPUT_OPTIONS,
+            if enabled { "true" } else { "false" },
+        )
+    }
 }
 
-/// Apply dry-mode settings to a job definition by injecting the appropriate
-/// custom args (--itemize-changes, --checksum) if enabled and not already present.
+/// Apply dry-mode settings to a job definition by enabling the appropriate
+/// boolean fields (itemize_changes, checksum) if the dry-mode setting is on.
 pub fn apply_dry_mode_settings(job: &mut JobDefinition, settings: &DryModeSettings) {
-    if settings.itemize_changes
-        && !job
-            .options
-            .custom_args
-            .contains(&"--itemize-changes".to_string())
-    {
-        job.options
-            .custom_args
-            .push("--itemize-changes".to_string());
+    if settings.itemize_changes {
+        job.options.output.itemize_changes = true;
     }
-    if settings.checksum
-        && !job
-            .options
-            .custom_args
-            .contains(&"--checksum".to_string())
-    {
-        job.options.custom_args.push("--checksum".to_string());
+    if settings.checksum {
+        job.options.file_handling.checksum = true;
     }
 }

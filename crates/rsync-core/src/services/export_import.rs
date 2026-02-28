@@ -1,17 +1,9 @@
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
+use chrono::Utc;
 use uuid::Uuid;
 
-use crate::models::job::JobDefinition;
+use crate::models::job::{ExportData, JobDefinition};
 
 const EXPORT_VERSION: u32 = 1;
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct ExportData {
-    pub version: u32,
-    pub exported_at: DateTime<Utc>,
-    pub jobs: Vec<JobDefinition>,
-}
 
 /// Export a list of jobs to a JSON string.
 pub fn export_jobs(jobs: Vec<JobDefinition>) -> Result<String, String> {
@@ -58,6 +50,7 @@ pub fn import_jobs(json: &str) -> Result<Vec<JobDefinition>, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use chrono::DateTime;
     use crate::models::job::*;
 
     fn sample_job(name: &str) -> JobDefinition {
@@ -65,13 +58,15 @@ mod tests {
             id: Uuid::new_v4(),
             name: name.to_string(),
             description: Some("test job".to_string()),
-            source: StorageLocation::Local {
-                path: "/src".to_string(),
+            transfer: TransferConfig {
+                source: StorageLocation::Local {
+                    path: "/src".to_string(),
+                },
+                destination: StorageLocation::Local {
+                    path: "/dst".to_string(),
+                },
+                backup_mode: BackupMode::Mirror,
             },
-            destination: StorageLocation::Local {
-                path: "/dst".to_string(),
-            },
-            backup_mode: BackupMode::Mirror,
             options: RsyncOptions::default(),
             ssh_config: None,
             schedule: None,
@@ -122,16 +117,16 @@ mod tests {
     #[test]
     fn import_preserves_job_data() {
         let mut job = sample_job("My Backup");
-        job.options.compress = true;
-        job.options.delete = true;
-        job.options.exclude_patterns = vec!["*.log".to_string()];
+        job.options.core_transfer.compress = true;
+        job.options.file_handling.delete = true;
+        job.options.advanced.exclude_patterns = vec!["*.log".to_string()];
         let json = export_jobs(vec![job]).unwrap();
 
         let imported = import_jobs(&json).unwrap();
         assert_eq!(imported[0].name, "My Backup");
-        assert!(imported[0].options.compress);
-        assert!(imported[0].options.delete);
-        assert_eq!(imported[0].options.exclude_patterns, vec!["*.log"]);
+        assert!(imported[0].options.core_transfer.compress);
+        assert!(imported[0].options.file_handling.delete);
+        assert_eq!(imported[0].options.advanced.exclude_patterns, vec!["*.log"]);
     }
 
     #[test]
@@ -170,7 +165,7 @@ mod tests {
     #[test]
     fn roundtrip_with_ssh_config() {
         let mut job = sample_job("SSH Job");
-        job.destination = StorageLocation::RemoteSsh {
+        job.transfer.destination = StorageLocation::RemoteSsh {
             user: "admin".to_string(),
             host: "server.local".to_string(),
             port: 2222,
@@ -186,7 +181,7 @@ mod tests {
         let json = export_jobs(vec![job.clone()]).unwrap();
         let imported = import_jobs(&json).unwrap();
 
-        assert_eq!(imported[0].destination, job.destination);
+        assert_eq!(imported[0].transfer.destination, job.transfer.destination);
         assert_eq!(imported[0].ssh_config, job.ssh_config);
     }
 

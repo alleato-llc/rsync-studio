@@ -29,7 +29,8 @@ use rsync_core::services::job_executor::JobExecutor;
 use rsync_core::services::job_service::JobService;
 use rsync_core::services::retention_runner;
 use rsync_core::services::running_jobs::RunningJobs;
-use rsync_core::services::scheduler_backend::{InProcessScheduler, SchedulerBackend, SchedulerConfig};
+use rsync_core::models::schedule::SchedulerConfig;
+use rsync_core::services::scheduler_backend::{InProcessScheduler, SchedulerBackend};
 use rsync_core::services::settings_service::SettingsService;
 use rsync_core::services::statistics_service::StatisticsService;
 
@@ -218,7 +219,7 @@ fn list_jobs(job_service: &Arc<JobService>) -> io::Result<()> {
     println!("{}", "-".repeat(90));
 
     for job in &jobs {
-        let mode = match &job.backup_mode {
+        let mode = match &job.transfer.backup_mode {
             rsync_core::models::job::BackupMode::Mirror => "Mirror",
             rsync_core::models::job::BackupMode::Versioned { .. } => "Versioned",
             rsync_core::models::job::BackupMode::Snapshot { .. } => "Snapshot",

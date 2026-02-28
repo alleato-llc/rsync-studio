@@ -11,12 +11,15 @@ use rsync_core::models::backup::{BackupInvocation, InvocationTrigger, SnapshotRe
 use rsync_core::models::job::JobDefinition;
 use rsync_core::models::statistics::AggregatedStats;
 use rsync_core::models::validation::PreflightResult;
-use rsync_core::services::command_explainer::{self, CommandExplanation};
+use rsync_core::models::command::CommandExplanation;
+use rsync_core::models::scrubber::{ScrubApplyResult, ScrubScanResult};
+use rsync_core::models::settings::{DryModeSettings, RetentionSettings};
+use rsync_core::services::command_explainer;
 use rsync_core::services::command_parser;
 use rsync_core::services::export_import;
-use rsync_core::services::log_scrubber::{self, ScrubApplyResult, ScrubScanResult};
+use rsync_core::services::log_scrubber;
 use rsync_core::services::preflight;
-use rsync_core::services::settings_service::{self, DryModeSettings, RetentionSettings};
+use rsync_core::services::settings_service;
 
 use crate::execution::TauriEventHandler;
 use crate::state::AppState;
@@ -113,7 +116,7 @@ pub fn execute_job_dry_run(
         .get_job(&job_uuid)
         .map_err(|e| e.to_string())?;
 
-    job.options.dry_run = true;
+    job.options.core_transfer.dry_run = true;
 
     // Apply app-wide dry-mode settings (itemize-changes, checksum)
     let dry_settings = state
@@ -385,7 +388,7 @@ pub fn delete_invocation(
         .map_err(|e| e.to_string())?;
 
     // Delete log file if it exists
-    if let Some(ref path) = inv.log_file_path {
+    if let Some(ref path) = inv.execution_output.log_file_path {
         if std::path::Path::new(path).exists() {
             let _ = std::fs::remove_file(path);
         }
@@ -413,7 +416,7 @@ pub fn delete_invocations_for_job(
         .map_err(|e| e.to_string())?;
 
     for inv in &invocations {
-        if let Some(ref path) = inv.log_file_path {
+        if let Some(ref path) = inv.execution_output.log_file_path {
             if std::path::Path::new(path).exists() {
                 let _ = std::fs::remove_file(path);
             }
@@ -474,6 +477,56 @@ pub fn set_nas_auto_detect(enabled: bool, state: State<'_, AppState>) -> Result<
     state
         .settings_service
         .set_nas_auto_detect(enabled)
+        .map_err(|e| e.to_string())
+}
+
+// --- Advanced rsync option group visibility ---
+
+#[tauri::command]
+pub fn get_show_file_handling_options(state: State<'_, AppState>) -> Result<bool, String> {
+    state
+        .settings_service
+        .get_show_file_handling_options()
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn set_show_file_handling_options(enabled: bool, state: State<'_, AppState>) -> Result<(), String> {
+    state
+        .settings_service
+        .set_show_file_handling_options(enabled)
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn get_show_metadata_options(state: State<'_, AppState>) -> Result<bool, String> {
+    state
+        .settings_service
+        .get_show_metadata_options()
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn set_show_metadata_options(enabled: bool, state: State<'_, AppState>) -> Result<(), String> {
+    state
+        .settings_service
+        .set_show_metadata_options(enabled)
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn get_show_output_options(state: State<'_, AppState>) -> Result<bool, String> {
+    state
+        .settings_service
+        .get_show_output_options()
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn set_show_output_options(enabled: bool, state: State<'_, AppState>) -> Result<(), String> {
+    state
+        .settings_service
+        .set_show_output_options(enabled)
         .map_err(|e| e.to_string())
 }
 

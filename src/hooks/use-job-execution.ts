@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
-import type { ProgressUpdate, LogLine, JobStatusEvent } from "@/types/progress";
+import type { ProgressUpdate, LogLine, JobStatusEvent } from "@/types/execution/progress";
 import type { ItemizedChange } from "@/types/itemize";
 import type { JobStatus } from "@/types/job";
 import { executeJob as invokeExecute, executeDryRun as invokeDryRun, cancelJob as invokeCancel, getRunningJobs, getMaxItemizedChanges, getLogDirectory } from "@/lib/tauri";

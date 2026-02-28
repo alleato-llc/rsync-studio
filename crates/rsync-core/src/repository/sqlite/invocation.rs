@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 use crate::database::sqlite::{from_json, parse_datetime, parse_uuid, to_json};
 use crate::error::AppError;
-use crate::models::backup::BackupInvocation;
+use crate::models::backup::{BackupInvocation, ExecutionOutput, TransferStats};
 use crate::repository::invocation::InvocationRepository;
 
 pub struct SqliteInvocationRepository {
@@ -30,14 +30,14 @@ impl InvocationRepository for SqliteInvocationRepository {
                 inv.started_at.to_rfc3339(),
                 inv.finished_at.map(|dt| dt.to_rfc3339()),
                 to_json(&inv.status)?,
-                inv.bytes_transferred as i64,
-                inv.files_transferred as i64,
-                inv.total_files as i64,
-                inv.snapshot_path,
-                inv.command_executed,
-                inv.exit_code,
+                inv.transfer_stats.bytes_transferred as i64,
+                inv.transfer_stats.files_transferred as i64,
+                inv.transfer_stats.total_files as i64,
+                inv.execution_output.snapshot_path,
+                inv.execution_output.command_executed,
+                inv.execution_output.exit_code,
                 to_json(&inv.trigger)?,
-                inv.log_file_path,
+                inv.execution_output.log_file_path,
             ],
         )
         .map_err(|e| AppError::DatabaseError(e.to_string()))?;
@@ -117,12 +117,12 @@ impl InvocationRepository for SqliteInvocationRepository {
                 rusqlite::params![
                     inv.finished_at.map(|dt| dt.to_rfc3339()),
                     to_json(&inv.status)?,
-                    inv.bytes_transferred as i64,
-                    inv.files_transferred as i64,
-                    inv.total_files as i64,
-                    inv.snapshot_path,
-                    inv.exit_code,
-                    inv.log_file_path,
+                    inv.transfer_stats.bytes_transferred as i64,
+                    inv.transfer_stats.files_transferred as i64,
+                    inv.transfer_stats.total_files as i64,
+                    inv.execution_output.snapshot_path,
+                    inv.execution_output.exit_code,
+                    inv.execution_output.log_file_path,
                     inv.id.to_string(),
                 ],
             )
@@ -187,13 +187,17 @@ fn row_to_invocation(row: &rusqlite::Row) -> Result<BackupInvocation, AppError> 
         started_at: parse_datetime(&started_str)?,
         finished_at: finished_str.as_deref().map(parse_datetime).transpose()?,
         status: from_json(&status_json)?,
-        bytes_transferred: bytes as u64,
-        files_transferred: files as u64,
-        total_files: total as u64,
-        snapshot_path,
-        command_executed: command,
-        exit_code,
         trigger: from_json(&trigger_json)?,
-        log_file_path,
+        transfer_stats: TransferStats {
+            bytes_transferred: bytes as u64,
+            files_transferred: files as u64,
+            total_files: total as u64,
+        },
+        execution_output: ExecutionOutput {
+            command_executed: command,
+            exit_code,
+            snapshot_path,
+            log_file_path,
+        },
     })
 }

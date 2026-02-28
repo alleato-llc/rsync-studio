@@ -4,6 +4,11 @@ use uuid::Uuid;
 
 use super::schedule::ScheduleConfig;
 
+pub use super::rsync_options::{
+    AdvancedOptions, CoreTransferOptions, FileHandlingOptions, MetadataOptions, OutputOptions,
+    RsyncOptions,
+};
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(tag = "type")]
 pub enum BackupMode {
@@ -111,52 +116,10 @@ impl Default for SshConfig {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct RsyncOptions {
-    #[serde(default = "default_true")]
-    pub archive: bool,
-    #[serde(default)]
-    pub compress: bool,
-    #[serde(default)]
-    pub verbose: bool,
-    #[serde(default)]
-    pub delete: bool,
-    #[serde(default)]
-    pub dry_run: bool,
-    #[serde(default)]
-    pub partial: bool,
-    #[serde(default)]
-    pub progress: bool,
-    #[serde(default)]
-    pub human_readable: bool,
-    #[serde(default)]
-    pub exclude_patterns: Vec<String>,
-    #[serde(default)]
-    pub include_patterns: Vec<String>,
-    pub bandwidth_limit: Option<u64>,
-    #[serde(default)]
-    pub custom_args: Vec<String>,
-    #[serde(default)]
-    pub size_only: bool,
-}
-
-impl Default for RsyncOptions {
-    fn default() -> Self {
-        Self {
-            archive: true,
-            compress: false,
-            verbose: false,
-            delete: false,
-            dry_run: false,
-            partial: false,
-            progress: false,
-            human_readable: false,
-            exclude_patterns: Vec::new(),
-            include_patterns: Vec::new(),
-            bandwidth_limit: None,
-            custom_args: Vec::new(),
-            size_only: false,
-        }
-    }
+pub struct TransferConfig {
+    pub source: StorageLocation,
+    pub destination: StorageLocation,
+    pub backup_mode: BackupMode,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -164,9 +127,7 @@ pub struct JobDefinition {
     pub id: Uuid,
     pub name: String,
     pub description: Option<String>,
-    pub source: StorageLocation,
-    pub destination: StorageLocation,
-    pub backup_mode: BackupMode,
+    pub transfer: TransferConfig,
     pub options: RsyncOptions,
     pub ssh_config: Option<SshConfig>,
     pub schedule: Option<ScheduleConfig>,
@@ -182,4 +143,11 @@ pub enum JobStatus {
     Completed,
     Failed,
     Cancelled,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct ExportData {
+    pub version: u32,
+    pub exported_at: DateTime<Utc>,
+    pub jobs: Vec<JobDefinition>,
 }

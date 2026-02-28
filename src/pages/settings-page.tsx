@@ -32,6 +32,11 @@ export function SettingsPage() {
   // NAS auto-detect state
   const [nasAutoDetect, setNasAutoDetectState] = useState(true);
 
+  // Advanced rsync option groups
+  const [showFileHandling, setShowFileHandling] = useState(false);
+  const [showMetadata, setShowMetadata] = useState(false);
+  const [showOutput, setShowOutput] = useState(false);
+
   // Dry mode state
   const [dryModeItemize, setDryModeItemize] = useState(false);
   const [dryModeChecksum, setDryModeChecksum] = useState(false);
@@ -56,6 +61,9 @@ export function SettingsPage() {
   useEffect(() => {
     api.getAutoTrailingSlash().then(setAutoTrailingSlashState).catch(console.error);
     api.getNasAutoDetect().then(setNasAutoDetectState).catch(console.error);
+    api.getShowFileHandlingOptions().then(setShowFileHandling).catch(console.error);
+    api.getShowMetadataOptions().then(setShowMetadata).catch(console.error);
+    api.getShowOutputOptions().then(setShowOutput).catch(console.error);
     api
       .getDryModeSettings()
       .then((s) => {
@@ -302,6 +310,90 @@ export function SettingsPage() {
                 await api.setNasAutoDetect(checked);
               }}
             />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Advanced Rsync Options */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Advanced Rsync Options</CardTitle>
+          <CardDescription>
+            Show additional rsync flag groups in the job form. Each group adds
+            toggle switches for commonly-used flags beyond the defaults.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* File Handling */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label htmlFor="show-file-handling">File Handling</Label>
+                <p className="text-xs text-muted-foreground">
+                  Default: <Badge variant="secondary" className="text-xs mx-0.5">--delete</Badge>
+                  <Badge variant="secondary" className="text-xs mx-0.5">--size-only</Badge>
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Reveals: checksum, update, whole-file, ignore-existing, one-file-system
+                </p>
+              </div>
+              <Switch
+                id="show-file-handling"
+                checked={showFileHandling}
+                onCheckedChange={async (checked) => {
+                  setShowFileHandling(checked);
+                  await api.setShowFileHandlingOptions(checked);
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Metadata Preservation */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label htmlFor="show-metadata">Metadata Preservation</Label>
+                <p className="text-xs text-muted-foreground">
+                  Default: <Badge variant="secondary" className="text-xs mx-0.5">-a (archive)</Badge>
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Reveals: hard-links, ACLs, xattrs, numeric-ids
+                </p>
+              </div>
+              <Switch
+                id="show-metadata"
+                checked={showMetadata}
+                onCheckedChange={async (checked) => {
+                  setShowMetadata(checked);
+                  await api.setShowMetadataOptions(checked);
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Output */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label htmlFor="show-output">Output</Label>
+                <p className="text-xs text-muted-foreground">
+                  Default: <Badge variant="secondary" className="text-xs mx-0.5">-v (verbose)</Badge>
+                  <Badge variant="secondary" className="text-xs mx-0.5">--progress</Badge>
+                  <Badge variant="secondary" className="text-xs mx-0.5">-h (human-readable)</Badge>
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Reveals: stats, itemize-changes
+                </p>
+              </div>
+              <Switch
+                id="show-output"
+                checked={showOutput}
+                onCheckedChange={async (checked) => {
+                  setShowOutput(checked);
+                  await api.setShowOutputOptions(checked);
+                }}
+              />
+            </div>
           </div>
         </CardContent>
       </Card>

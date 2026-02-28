@@ -34,8 +34,8 @@ impl StatisticsService {
             job_id,
             invocation_id: inv.id,
             recorded_at: Utc::now(),
-            files_transferred: inv.files_transferred,
-            bytes_transferred: inv.bytes_transferred,
+            files_transferred: inv.transfer_stats.files_transferred,
+            bytes_transferred: inv.transfer_stats.bytes_transferred,
             duration_secs,
             speedup,
         };

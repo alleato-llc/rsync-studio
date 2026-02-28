@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import type { JobDefinition, JobStatus } from "@/types/job";
-import type { ProgressUpdate, LogLine } from "@/types/progress";
+import type { ProgressUpdate, LogLine } from "@/types/execution/progress";
 import type { PreflightResult } from "@/types/validation";
 import * as api from "@/lib/tauri";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Pencil, Trash2, ShieldCheck, ChevronDown, ChevronRight, FlaskConical, ExternalLink, Terminal } from "lucide-react";
 import { JobRunButton } from "./job-run-button";
 import { ScheduleBadge } from "./schedule-badge";
-import { locationSummary, statusBadgeVariant } from "./job-utils";
+import { locationSummary, statusBadgeVariant } from "./job-formatting";
 
 interface JobTableProps {
   jobs: JobDefinition[];
@@ -103,14 +103,14 @@ function JobTableRow({
           </div>
         </td>
         <td className="px-4 py-3 text-sm text-muted-foreground truncate max-w-[200px]">
-          {locationSummary(job.source)}
+          {locationSummary(job.transfer.source)}
         </td>
         <td className="px-4 py-3 text-sm text-muted-foreground truncate max-w-[200px]">
-          {locationSummary(job.destination)}
+          {locationSummary(job.transfer.destination)}
         </td>
         <td className="px-4 py-3">
           <Badge variant="outline" className="text-xs">
-            {job.backup_mode.type}
+            {job.transfer.backup_mode.type}
           </Badge>
         </td>
         <td className="px-4 py-3">
@@ -145,7 +145,7 @@ function JobTableRow({
             >
               <FlaskConical className="h-4 w-4" />
             </Button>
-            <JobRunButton isRunning={isRunning} disabled={preflight !== null && !preflight.overall_pass} hidden={job.options.dry_run} onRun={onRun} onCancel={onCancel} />
+            <JobRunButton isRunning={isRunning} disabled={preflight !== null && !preflight.overall_pass} hidden={job.options.core_transfer.dry_run} onRun={onRun} onCancel={onCancel} />
             {status !== "Idle" && (
               <Button
                 variant="ghost"

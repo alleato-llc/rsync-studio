@@ -1,6 +1,6 @@
 import { useRef, useEffect, useCallback } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import type { LogLine } from "@/types/progress";
+import type { LogLine } from "@/types/execution/progress";
 import { cn } from "@/lib/utils";
 
 const MAX_LOG_LINES = 10_000;

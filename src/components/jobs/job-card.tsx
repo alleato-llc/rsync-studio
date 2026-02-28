@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Pencil, Trash2, ArrowRight, ShieldCheck, FlaskConical, Terminal } from "lucide-react";
 import { JobRunButton } from "./job-run-button";
 import { ScheduleBadge } from "./schedule-badge";
-import { locationSummary, statusBadgeVariant } from "./job-utils";
+import { locationSummary, statusBadgeVariant } from "./job-formatting";
 
 interface JobCardProps {
   job: JobDefinition;
@@ -83,7 +83,7 @@ export function JobCard({ job, status, onEdit, onDelete, onRun, onDryRun, onCanc
             >
               <FlaskConical className="h-4 w-4" />
             </Button>
-            <JobRunButton isRunning={isRunning} disabled={preflight !== null && !preflight.overall_pass} hidden={job.options.dry_run} onRun={onRun} onCancel={onCancel} />
+            <JobRunButton isRunning={isRunning} disabled={preflight !== null && !preflight.overall_pass} hidden={job.options.core_transfer.dry_run} onRun={onRun} onCancel={onCancel} />
             {status !== "Idle" && (
               <Button
                 variant="ghost"
@@ -112,15 +112,15 @@ export function JobCard({ job, status, onEdit, onDelete, onRun, onDryRun, onCanc
       </CardHeader>
       <CardContent>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span className="truncate max-w-[40%]">{locationSummary(job.source)}</span>
+          <span className="truncate max-w-[40%]">{locationSummary(job.transfer.source)}</span>
           <ArrowRight className="h-3 w-3 shrink-0" />
           <span className="truncate max-w-[40%]">
-            {locationSummary(job.destination)}
+            {locationSummary(job.transfer.destination)}
           </span>
         </div>
         <div className="mt-2 flex flex-wrap gap-2">
           <Badge variant="outline" className="text-xs">
-            {job.backup_mode.type}
+            {job.transfer.backup_mode.type}
           </Badge>
           <ScheduleBadge schedule={job.schedule} />
           {status !== "Idle" && (

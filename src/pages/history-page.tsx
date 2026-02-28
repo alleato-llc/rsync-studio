@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Trash2, FileText, X } from "lucide-react";
 import type { JobDefinition } from "@/types/job";
-import type { BackupInvocation, SnapshotRecord } from "@/types/backup";
+import type { BackupInvocation, SnapshotRecord } from "@/types/execution/backup";
 import * as api from "@/lib/tauri";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -133,9 +133,9 @@ export function HistoryPage() {
   }
 
   function handleViewLog(inv: BackupInvocation) {
-    if (!inv.log_file_path) return;
+    if (!inv.execution_output.log_file_path) return;
     setViewingLogId(inv.id);
-    setLogFilePath(inv.log_file_path);
+    setLogFilePath(inv.execution_output.log_file_path);
   }
 
   if (loading) {
@@ -248,7 +248,7 @@ export function HistoryPage() {
                         {formatDate(inv.started_at)}
                       </CardTitle>
                       <div className="flex items-center gap-2">
-                        {inv.log_file_path && (
+                        {inv.execution_output.log_file_path && (
                           <Button
                             variant="ghost"
                             size="icon"
@@ -282,26 +282,26 @@ export function HistoryPage() {
                     {inv.finished_at && (
                       <CardDescription className="text-xs">
                         Duration: {formatDuration(inv.started_at, inv.finished_at)}
-                        {inv.exit_code !== null && ` | Exit code: ${inv.exit_code}`}
+                        {inv.execution_output.exit_code !== null && ` | Exit code: ${inv.execution_output.exit_code}`}
                       </CardDescription>
                     )}
                   </CardHeader>
                   <CardContent>
                     <div className="flex gap-4 text-xs text-muted-foreground">
                       <span>
-                        Files: {inv.files_transferred}
-                        {inv.total_files > 0 && `/${inv.total_files}`}
+                        Files: {inv.transfer_stats.files_transferred}
+                        {inv.transfer_stats.total_files > 0 && `/${inv.transfer_stats.total_files}`}
                       </span>
-                      <span>Transferred: {formatBytes(inv.bytes_transferred)}</span>
-                      {inv.snapshot_path && (
-                        <span className="truncate max-w-[200px]" title={inv.snapshot_path}>
-                          Snapshot: {inv.snapshot_path}
+                      <span>Transferred: {formatBytes(inv.transfer_stats.bytes_transferred)}</span>
+                      {inv.execution_output.snapshot_path && (
+                        <span className="truncate max-w-[200px]" title={inv.execution_output.snapshot_path}>
+                          Snapshot: {inv.execution_output.snapshot_path}
                         </span>
                       )}
                     </div>
                     <div className="mt-1">
                       <code className="text-xs text-muted-foreground break-all">
-                        {inv.command_executed}
+                        {inv.execution_output.command_executed}
                       </code>
                     </div>
                   </CardContent>

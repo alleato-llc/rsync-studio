@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState, useCallback } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import type { LogFileLine } from "@/types/log-file";
+import type { LogFileLine } from "@/types/execution/log-file";
 import { readLogFileLines } from "@/lib/tauri";
 import { cn } from "@/lib/utils";
 

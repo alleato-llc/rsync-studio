@@ -4,7 +4,7 @@ use chrono::Utc;
 use uuid::Uuid;
 
 use crate::models::job::{
-    BackupMode, JobDefinition, RetentionPolicy, RsyncOptions, StorageLocation,
+    BackupMode, JobDefinition, RetentionPolicy, RsyncOptions, StorageLocation, TransferConfig,
 };
 use crate::tests::test_file_system::TestFileSystem;
 use crate::tests::test_rsync_client::TestRsyncClient;
@@ -19,16 +19,24 @@ pub fn create_mirror_job(source: &str, dest: &str) -> JobDefinition {
         id: Uuid::new_v4(),
         name: "Test Mirror Job".to_string(),
         description: Some("A test mirror backup job".to_string()),
-        source: StorageLocation::Local {
-            path: source.to_string(),
+        transfer: TransferConfig {
+            source: StorageLocation::Local {
+                path: source.to_string(),
+            },
+            destination: StorageLocation::Local {
+                path: dest.to_string(),
+            },
+            backup_mode: BackupMode::Mirror,
         },
-        destination: StorageLocation::Local {
-            path: dest.to_string(),
-        },
-        backup_mode: BackupMode::Mirror,
         options: RsyncOptions {
-            archive: true,
-            delete: true,
+            core_transfer: crate::models::rsync_options::CoreTransferOptions {
+                archive: true,
+                ..Default::default()
+            },
+            file_handling: crate::models::rsync_options::FileHandlingOptions {
+                delete: true,
+                ..Default::default()
+            },
             ..RsyncOptions::default()
         },
         ssh_config: None,
@@ -45,14 +53,16 @@ pub fn create_versioned_job(source: &str, dest: &str, backup_dir: &str) -> JobDe
         id: Uuid::new_v4(),
         name: "Test Versioned Job".to_string(),
         description: Some("A test versioned backup job".to_string()),
-        source: StorageLocation::Local {
-            path: source.to_string(),
-        },
-        destination: StorageLocation::Local {
-            path: dest.to_string(),
-        },
-        backup_mode: BackupMode::Versioned {
-            backup_dir: backup_dir.to_string(),
+        transfer: TransferConfig {
+            source: StorageLocation::Local {
+                path: source.to_string(),
+            },
+            destination: StorageLocation::Local {
+                path: dest.to_string(),
+            },
+            backup_mode: BackupMode::Versioned {
+                backup_dir: backup_dir.to_string(),
+            },
         },
         options: RsyncOptions::default(),
         ssh_config: None,
@@ -73,14 +83,16 @@ pub fn create_snapshot_job(
         id: Uuid::new_v4(),
         name: "Test Snapshot Job".to_string(),
         description: Some("A test snapshot backup job".to_string()),
-        source: StorageLocation::Local {
-            path: source.to_string(),
-        },
-        destination: StorageLocation::Local {
-            path: dest.to_string(),
-        },
-        backup_mode: BackupMode::Snapshot {
-            retention_policy: retention,
+        transfer: TransferConfig {
+            source: StorageLocation::Local {
+                path: source.to_string(),
+            },
+            destination: StorageLocation::Local {
+                path: dest.to_string(),
+            },
+            backup_mode: BackupMode::Snapshot {
+                retention_policy: retention,
+            },
         },
         options: RsyncOptions::default(),
         ssh_config: None,

@@ -9,7 +9,6 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -29,6 +28,14 @@ function categoryVariant(
       return "default";
     case "Performance":
       return "secondary";
+    case "FileHandling":
+      return "secondary";
+    case "Metadata":
+      return "default";
+    case "Output":
+      return "outline";
+    case "Deletion":
+      return "destructive";
     case "Unknown":
       return "destructive";
   }
@@ -77,19 +84,19 @@ export function ToolsPage() {
   }
 
   return (
-    <div className="space-y-4">
-      <div>
+    <div className="flex flex-col h-[calc(100vh-4rem)]">
+      <div className="flex-shrink-0">
         <h2 className="text-2xl font-bold">Tools</h2>
       </div>
 
-      <Tabs defaultValue="explainer">
-        <TabsList>
+      <Tabs defaultValue="explainer" className="flex-1 flex flex-col min-h-0 mt-4">
+        <TabsList className="flex-shrink-0">
           <TabsTrigger value="explainer">Command Explainer</TabsTrigger>
           <TabsTrigger value="scrubber">Log Scrubber</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="explainer">
-          <div className="space-y-4">
+        <TabsContent value="explainer" className="flex-1 flex flex-col min-h-0">
+          <div className="flex-shrink-0 space-y-4 mt-0">
             <p className="text-muted-foreground">
               Paste an rsync command to see what each argument does, or import it
               as a job.
@@ -126,47 +133,38 @@ export function ToolsPage() {
                 </CardContent>
               </Card>
             )}
-
-            {explanation && (
-              <div className="space-y-4">
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm">Summary</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm">{explanation.summary}</p>
-                  </CardContent>
-                </Card>
-
-                <ScrollArea className="h-[calc(100vh-30rem)]">
-                  <div className="space-y-2 pr-4">
-                    {explanation.arguments.map((arg, i) => (
-                      <Card key={i}>
-                        <CardHeader className="py-3 pb-1">
-                          <div className="flex items-center gap-2">
-                            <code className="text-sm font-mono font-medium">
-                              {arg.argument}
-                            </code>
-                            <Badge
-                              variant={categoryVariant(arg.category)}
-                              className="text-xs"
-                            >
-                              {arg.category}
-                            </Badge>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="pb-3">
-                          <CardDescription className="text-sm">
-                            {arg.description}
-                          </CardDescription>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </ScrollArea>
-              </div>
-            )}
           </div>
+
+          {explanation && (
+            <div className="flex-1 min-h-0 mt-4">
+              <ScrollArea className="h-full">
+                <div className="space-y-2 pr-4">
+                  {explanation.arguments.map((arg, i) => (
+                    <Card key={i}>
+                      <CardHeader className="py-3 pb-1">
+                        <div className="flex items-center gap-2">
+                          <code className="text-sm font-mono font-medium">
+                            {arg.argument}
+                          </code>
+                          <Badge
+                            variant={categoryVariant(arg.category)}
+                            className="text-xs"
+                          >
+                            {arg.category}
+                          </Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="pb-3">
+                        <CardDescription className="text-sm">
+                          {arg.description}
+                        </CardDescription>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </ScrollArea>
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="scrubber">

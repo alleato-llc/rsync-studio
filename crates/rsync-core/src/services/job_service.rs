@@ -6,7 +6,7 @@ use uuid::Uuid;
 use crate::error::AppError;
 use crate::models::backup::{BackupInvocation, SnapshotRecord};
 use crate::models::job::{BackupMode, JobDefinition};
-use crate::services::retention;
+use crate::services::snapshot_retention;
 use crate::repository::invocation::InvocationRepository;
 use crate::repository::job::JobRepository;
 use crate::repository::snapshot::SnapshotRepository;
@@ -137,13 +137,13 @@ impl JobService {
         job_id: &Uuid,
     ) -> Result<Vec<String>, AppError> {
         let job = self.jobs.get_job(job_id)?;
-        let policy = match &job.backup_mode {
+        let policy = match &job.transfer.backup_mode {
             BackupMode::Snapshot { retention_policy } => retention_policy,
             _ => return Ok(Vec::new()), // Not a snapshot job, nothing to do
         };
 
         let snapshots = self.snapshots.list_snapshots_for_job(job_id)?;
-        let to_delete = retention::compute_snapshots_to_delete(&snapshots, policy);
+        let to_delete = snapshot_retention::compute_snapshots_to_delete(&snapshots, policy);
 
         let mut pruned_paths = Vec::new();
         for snap_id in &to_delete {

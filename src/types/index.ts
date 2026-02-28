@@ -4,22 +4,25 @@ export type {
   RetentionPolicy,
   SshConfig,
   RsyncOptions,
+  TransferConfig,
   JobDefinition,
   JobStatus,
 } from "./job";
 
 export type { ScheduleConfig, ScheduleType } from "./schedule";
 
-export type { LogLevel, LogEntry } from "./log";
+export type { LogLevel, LogEntry } from "./execution/log";
 
 export type {
+  TransferStats,
+  ExecutionOutput,
   BackupInvocation,
   InvocationStatus,
   InvocationTrigger,
   SnapshotRecord,
-} from "./backup";
+} from "./execution/backup";
 
-export type { ProgressUpdate, LogLine, JobStatusEvent } from "./progress";
+export type { ProgressUpdate, LogLine, JobStatusEvent } from "./execution/progress";
 
 export type {
   ItemizedChange,
@@ -34,3 +37,5 @@ export type {
   CheckType,
   CheckSeverity,
 } from "./validation";
+
+export type { RetentionSettings, DryModeSettings } from "./settings";

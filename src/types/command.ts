@@ -10,6 +10,10 @@ export type ArgCategory =
   | "Path"
   | "Ssh"
   | "Performance"
+  | "FileHandling"
+  | "Metadata"
+  | "Output"
+  | "Deletion"
   | "Unknown";
 
 export interface CommandExplanation {

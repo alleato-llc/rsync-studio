@@ -7,7 +7,8 @@ use rsync_core::models::backup::{BackupInvocation, InvocationTrigger};
 use rsync_core::models::job::JobDefinition;
 use rsync_core::models::progress::{JobStatusEvent, LogLine, ProgressUpdate};
 use rsync_core::models::statistics::AggregatedStats;
-use rsync_core::services::command_explainer::{self, CommandExplanation};
+use rsync_core::models::command::CommandExplanation;
+use rsync_core::services::command_explainer;
 use rsync_core::services::command_parser;
 use rsync_core::services::job_executor::JobExecutor;
 use rsync_core::services::job_service::JobService;
@@ -215,29 +216,35 @@ impl Default for SettingsState {
     }
 }
 
-pub struct App {
-    pub current_page: Page,
-    pub should_quit: bool,
+pub struct AppServices {
     pub job_executor: Arc<JobExecutor>,
     pub job_service: Arc<JobService>,
     pub statistics_service: Arc<StatisticsService>,
     pub settings_service: Arc<SettingsService>,
-    pub theme: &'static Theme,
+}
 
-    // Event channel for job execution events
-    pub job_sender: std::sync::mpsc::Sender<TuiEvent>,
+pub struct PageStates {
+    pub jobs: JobsState,
+    pub history: HistoryState,
+    pub statistics: StatisticsState,
+    pub tools: ToolsState,
+    pub settings: SettingsState,
+}
 
-    // Per-page state
-    pub jobs_state: JobsState,
+pub struct OverlayState {
     pub job_output: Option<JobOutputState>,
     pub job_form: Option<JobFormState>,
-    pub history_state: HistoryState,
-    pub statistics_state: StatisticsState,
-    pub tools_state: ToolsState,
-    pub settings_state: SettingsState,
-
-    // Popup
     pub popup: Option<PopupKind>,
+}
+
+pub struct App {
+    pub current_page: Page,
+    pub should_quit: bool,
+    pub services: AppServices,
+    pub theme: &'static Theme,
+    pub job_sender: std::sync::mpsc::Sender<TuiEvent>,
+    pub pages: PageStates,
+    pub overlays: OverlayState,
 }
 
 impl App {
@@ -259,20 +266,26 @@ impl App {
         let mut app = Self {
             current_page: Page::Jobs,
             should_quit: false,
-            job_executor,
-            job_service,
-            statistics_service,
-            settings_service,
+            services: AppServices {
+                job_executor,
+                job_service,
+                statistics_service,
+                settings_service,
+            },
             theme,
             job_sender,
-            jobs_state: JobsState::default(),
-            job_output: None,
-            job_form: None,
-            history_state: HistoryState::default(),
-            statistics_state: StatisticsState::default(),
-            tools_state: ToolsState::default(),
-            settings_state: SettingsState::default(),
-            popup: None,
+            pages: PageStates {
+                jobs: JobsState::default(),
+                history: HistoryState::default(),
+                statistics: StatisticsState::default(),
+                tools: ToolsState::default(),
+                settings: SettingsState::default(),
+            },
+            overlays: OverlayState {
+                job_output: None,
+                job_form: None,
+                popup: None,
+            },
         };
 
         app.refresh_current_page();
@@ -291,59 +304,59 @@ impl App {
     }
 
     pub fn refresh_jobs(&mut self) {
-        if let Ok(jobs) = self.job_service.list_jobs() {
-            self.jobs_state.jobs = jobs;
-            if self.jobs_state.selected >= self.jobs_state.jobs.len() && !self.jobs_state.jobs.is_empty() {
-                self.jobs_state.selected = self.jobs_state.jobs.len() - 1;
+        if let Ok(jobs) = self.services.job_service.list_jobs() {
+            self.pages.jobs.jobs = jobs;
+            if self.pages.jobs.selected >= self.pages.jobs.jobs.len() && !self.pages.jobs.jobs.is_empty() {
+                self.pages.jobs.selected = self.pages.jobs.jobs.len() - 1;
             }
         }
     }
 
     pub fn refresh_history(&mut self) {
-        if let Ok(invocations) = self.job_service.list_all_invocations() {
+        if let Ok(invocations) = self.services.job_service.list_all_invocations() {
             let mut invocations = invocations;
             invocations.sort_by(|a, b| b.started_at.cmp(&a.started_at));
-            self.history_state.invocations = invocations;
-            if self.history_state.selected >= self.history_state.invocations.len()
-                && !self.history_state.invocations.is_empty()
+            self.pages.history.invocations = invocations;
+            if self.pages.history.selected >= self.pages.history.invocations.len()
+                && !self.pages.history.invocations.is_empty()
             {
-                self.history_state.selected = self.history_state.invocations.len() - 1;
+                self.pages.history.selected = self.pages.history.invocations.len() - 1;
             }
         }
     }
 
     pub fn refresh_statistics(&mut self) {
-        if let Ok(agg) = self.statistics_service.get_aggregated() {
-            self.statistics_state.aggregated = Some(agg);
+        if let Ok(agg) = self.services.statistics_service.get_aggregated() {
+            self.pages.statistics.aggregated = Some(agg);
         }
         // Per-job stats
-        if let Ok(jobs) = self.job_service.list_jobs() {
+        if let Ok(jobs) = self.services.job_service.list_jobs() {
             let mut per_job = Vec::new();
             for job in &jobs {
-                if let Ok(stats) = self.statistics_service.get_aggregated_for_job(&job.id) {
+                if let Ok(stats) = self.services.statistics_service.get_aggregated_for_job(&job.id) {
                     if stats.total_jobs_run > 0 {
                         per_job.push((job.name.clone(), stats));
                     }
                 }
             }
-            self.statistics_state.per_job = per_job;
+            self.pages.statistics.per_job = per_job;
         }
     }
 
     pub fn refresh_settings(&mut self) {
-        let ss = &self.settings_service;
-        self.settings_state.log_directory = ss
+        let ss = &self.services.settings_service;
+        self.pages.settings.log_directory = ss
             .get_log_directory()
             .ok()
             .flatten()
-            .unwrap_or_else(|| self.job_executor.default_log_dir().to_string());
+            .unwrap_or_else(|| self.services.job_executor.default_log_dir().to_string());
 
         if let Ok(ret) = ss.get_retention_settings() {
-            self.settings_state.max_log_age_days = ret.max_log_age_days;
-            self.settings_state.max_history_per_job = ret.max_history_per_job;
+            self.pages.settings.max_log_age_days = ret.max_log_age_days;
+            self.pages.settings.max_history_per_job = ret.max_history_per_job;
         }
-        self.settings_state.auto_trailing_slash = ss.get_auto_trailing_slash().unwrap_or(true);
-        self.settings_state.tui_theme = ss
+        self.pages.settings.auto_trailing_slash = ss.get_auto_trailing_slash().unwrap_or(true);
+        self.pages.settings.tui_theme = ss
             .get_setting("tui_theme")
             .ok()
             .flatten()
@@ -354,7 +367,7 @@ impl App {
     pub fn handle_job_event(&mut self, event: TuiEvent) {
         match event {
             TuiEvent::LogLine(log_line) => {
-                if let Some(ref mut output) = self.job_output {
+                if let Some(ref mut output) = self.overlays.job_output {
                     if Some(log_line.invocation_id) == output.invocation_id {
                         output.log_lines.push(log_line);
                         if output.follow {
@@ -364,14 +377,14 @@ impl App {
                 }
             }
             TuiEvent::Progress(progress) => {
-                if let Some(ref mut output) = self.job_output {
+                if let Some(ref mut output) = self.overlays.job_output {
                     if Some(progress.invocation_id) == output.invocation_id {
                         output.progress = Some(progress);
                     }
                 }
             }
             TuiEvent::StatusChange(status) => {
-                if let Some(ref mut output) = self.job_output {
+                if let Some(ref mut output) = self.overlays.job_output {
                     if Some(status.invocation_id) == output.invocation_id {
                         output.status = Some(status);
                     }
@@ -391,12 +404,12 @@ impl App {
         }
 
         // Popup handling takes priority
-        if let Some(popup) = &self.popup {
+        if let Some(popup) = &self.overlays.popup {
             match popup {
                 PopupKind::Help | PopupKind::Error(_) => {
                     match key.code {
                         KeyCode::Esc | KeyCode::Enter | KeyCode::Char('q') | KeyCode::Char('?') => {
-                            self.popup = None;
+                            self.overlays.popup = None;
                         }
                         _ => {}
                     }
@@ -406,11 +419,11 @@ impl App {
                     match key.code {
                         KeyCode::Char('y') | KeyCode::Enter => {
                             let action = action.clone();
-                            self.popup = None;
+                            self.overlays.popup = None;
                             self.execute_confirm_action(action);
                         }
                         KeyCode::Char('n') | KeyCode::Esc => {
-                            self.popup = None;
+                            self.overlays.popup = None;
                         }
                         _ => {}
                     }
@@ -420,39 +433,39 @@ impl App {
         }
 
         // Job output viewer takes full control
-        if self.job_output.is_some() {
+        if self.overlays.job_output.is_some() {
             self.handle_job_output_key(key);
             return;
         }
 
         // Job form takes full control
-        if self.job_form.is_some() {
+        if self.overlays.job_form.is_some() {
             self.handle_job_form_key(key);
             return;
         }
 
         // Log viewer in history
-        if self.history_state.viewing_log {
+        if self.pages.history.viewing_log {
             self.handle_log_viewer_key(key);
             return;
         }
 
         // Search mode in jobs
-        if self.jobs_state.search_active {
+        if self.pages.jobs.search_active {
             self.handle_jobs_search_key(key);
             return;
         }
 
         // Text input mode in tools
         if self.current_page == Page::Tools
-            && (self.tools_state.command_input.is_focused || self.tools_state.scrub_input.is_focused)
+            && (self.pages.tools.command_input.is_focused || self.pages.tools.scrub_input.is_focused)
         {
             self.handle_tools_input_key(key);
             return;
         }
 
         // Settings editing mode
-        if self.settings_state.editing {
+        if self.pages.settings.editing {
             self.handle_settings_edit_key(key);
             return;
         }
@@ -464,7 +477,7 @@ impl App {
                 return;
             }
             KeyCode::Char('?') => {
-                self.popup = Some(PopupKind::Help);
+                self.overlays.popup = Some(PopupKind::Help);
                 return;
             }
             KeyCode::Char('1') => { self.switch_page(Page::Jobs); return; }
@@ -507,36 +520,36 @@ impl App {
     fn execute_confirm_action(&mut self, action: ConfirmAction) {
         match action {
             ConfirmAction::DeleteJob(id) => {
-                if let Err(e) = self.job_service.delete_job(&id) {
-                    self.popup = Some(PopupKind::Error(format!("Failed to delete job: {}", e)));
+                if let Err(e) = self.services.job_service.delete_job(&id) {
+                    self.overlays.popup = Some(PopupKind::Error(format!("Failed to delete job: {}", e)));
                 } else {
                     self.refresh_jobs();
                 }
             }
             ConfirmAction::DeleteInvocation(id) => {
-                if let Err(e) = self.job_service.delete_invocation(&id) {
-                    self.popup = Some(PopupKind::Error(format!("Failed to delete invocation: {}", e)));
+                if let Err(e) = self.services.job_service.delete_invocation(&id) {
+                    self.overlays.popup = Some(PopupKind::Error(format!("Failed to delete invocation: {}", e)));
                 } else {
                     self.refresh_history();
                 }
             }
             ConfirmAction::DeleteAllHistory(job_id) => {
-                if let Err(e) = self.job_service.delete_invocations_for_job(&job_id) {
-                    self.popup = Some(PopupKind::Error(format!("Failed to delete history: {}", e)));
+                if let Err(e) = self.services.job_service.delete_invocations_for_job(&job_id) {
+                    self.overlays.popup = Some(PopupKind::Error(format!("Failed to delete history: {}", e)));
                 } else {
                     self.refresh_history();
                 }
             }
             ConfirmAction::ResetStatistics => {
-                if let Err(e) = self.statistics_service.reset() {
-                    self.popup = Some(PopupKind::Error(format!("Failed to reset statistics: {}", e)));
+                if let Err(e) = self.services.statistics_service.reset() {
+                    self.overlays.popup = Some(PopupKind::Error(format!("Failed to reset statistics: {}", e)));
                 } else {
                     self.refresh_statistics();
                 }
             }
             ConfirmAction::ResetStatisticsForJob(id) => {
-                if let Err(e) = self.statistics_service.reset_for_job(&id) {
-                    self.popup = Some(PopupKind::Error(format!("Failed to reset job statistics: {}", e)));
+                if let Err(e) = self.services.statistics_service.reset_for_job(&id) {
+                    self.overlays.popup = Some(PopupKind::Error(format!("Failed to reset job statistics: {}", e)));
                 } else {
                     self.refresh_statistics();
                 }
@@ -551,11 +564,11 @@ impl App {
         match key.code {
             KeyCode::Char('j') | KeyCode::Down => {
                 if len > 0 {
-                    self.jobs_state.selected = (self.jobs_state.selected + 1).min(len - 1);
+                    self.pages.jobs.selected = (self.pages.jobs.selected + 1).min(len - 1);
                 }
             }
             KeyCode::Char('k') | KeyCode::Up => {
-                self.jobs_state.selected = self.jobs_state.selected.saturating_sub(1);
+                self.pages.jobs.selected = self.pages.jobs.selected.saturating_sub(1);
             }
             KeyCode::Char('n') => {
                 self.open_job_form_create();
@@ -579,12 +592,12 @@ impl App {
             KeyCode::Char('c') => {
                 if let Some(job) = self.selected_job() {
                     let job_id = job.id;
-                    self.job_executor.cancel(&job_id);
+                    self.services.job_executor.cancel(&job_id);
                 }
             }
             KeyCode::Char('x') => {
                 if let Some(job) = self.selected_job() {
-                    self.popup = Some(PopupKind::Confirm {
+                    self.overlays.popup = Some(PopupKind::Confirm {
                         title: "Delete Job".to_string(),
                         message: format!("Delete '{}'? This cannot be undone.", job.name),
                         action: ConfirmAction::DeleteJob(job.id),
@@ -597,9 +610,9 @@ impl App {
                 }
             }
             KeyCode::Char('/') => {
-                self.jobs_state.search_active = true;
-                self.jobs_state.search_input.clear();
-                self.jobs_state.search_input.is_focused = true;
+                self.pages.jobs.search_active = true;
+                self.pages.jobs.search_input.clear();
+                self.pages.jobs.search_input.is_focused = true;
             }
             _ => {}
         }
@@ -608,25 +621,25 @@ impl App {
     fn handle_jobs_search_key(&mut self, key: KeyEvent) {
         match key.code {
             KeyCode::Esc => {
-                self.jobs_state.search_active = false;
-                self.jobs_state.search_input.is_focused = false;
-                self.jobs_state.search_input.clear();
+                self.pages.jobs.search_active = false;
+                self.pages.jobs.search_input.is_focused = false;
+                self.pages.jobs.search_input.clear();
             }
             KeyCode::Enter => {
-                self.jobs_state.search_input.is_focused = false;
+                self.pages.jobs.search_input.is_focused = false;
             }
             _ => {
-                self.jobs_state.search_input.handle_key(key);
+                self.pages.jobs.search_input.handle_key(key);
             }
         }
     }
 
     pub fn filtered_jobs(&self) -> Vec<&JobDefinition> {
-        let query = self.jobs_state.search_input.value().to_lowercase();
+        let query = self.pages.jobs.search_input.value().to_lowercase();
         if query.is_empty() {
-            self.jobs_state.jobs.iter().collect()
+            self.pages.jobs.jobs.iter().collect()
         } else {
-            self.jobs_state
+            self.pages.jobs
                 .jobs
                 .iter()
                 .filter(|j| j.name.to_lowercase().contains(&query))
@@ -636,31 +649,31 @@ impl App {
 
     fn selected_job(&self) -> Option<JobDefinition> {
         let jobs = self.filtered_jobs();
-        jobs.get(self.jobs_state.selected).map(|j| (*j).clone())
+        jobs.get(self.pages.jobs.selected).map(|j| (*j).clone())
     }
 
     fn run_job(&mut self, job: &JobDefinition, dry_run: bool) {
         let mut job = job.clone();
         if dry_run {
-            job.options.dry_run = true;
+            job.options.core_transfer.dry_run = true;
         }
 
         let handler = Arc::new(TuiEventHandler::new(self.job_sender.clone()));
-        match self.job_executor.execute(&job, InvocationTrigger::Manual, handler) {
+        match self.services.job_executor.execute(&job, InvocationTrigger::Manual, handler) {
             Ok(invocation_id) => {
                 self.open_job_output(job.id, job.name.clone());
-                if let Some(ref mut output) = self.job_output {
+                if let Some(ref mut output) = self.overlays.job_output {
                     output.invocation_id = Some(invocation_id);
                 }
             }
             Err(e) => {
-                self.popup = Some(PopupKind::Error(format!("Failed to execute job: {}", e)));
+                self.overlays.popup = Some(PopupKind::Error(format!("Failed to execute job: {}", e)));
             }
         }
     }
 
     fn open_job_output(&mut self, job_id: Uuid, job_name: String) {
-        self.job_output = Some(JobOutputState {
+        self.overlays.job_output = Some(JobOutputState {
             job_id,
             job_name,
             invocation_id: None,
@@ -678,13 +691,15 @@ impl App {
             id: uuid::Uuid::new_v4(),
             name: String::new(),
             description: None,
-            source: rsync_core::models::job::StorageLocation::Local {
-                path: String::new(),
+            transfer: rsync_core::models::job::TransferConfig {
+                source: rsync_core::models::job::StorageLocation::Local {
+                    path: String::new(),
+                },
+                destination: rsync_core::models::job::StorageLocation::Local {
+                    path: String::new(),
+                },
+                backup_mode: rsync_core::models::job::BackupMode::Mirror,
             },
-            destination: rsync_core::models::job::StorageLocation::Local {
-                path: String::new(),
-            },
-            backup_mode: rsync_core::models::job::BackupMode::Mirror,
             options: rsync_core::models::job::RsyncOptions::default(),
             ssh_config: None,
             schedule: None,
@@ -693,7 +708,7 @@ impl App {
             updated_at: now,
         };
 
-        self.job_form = Some(JobFormState {
+        self.overlays.job_form = Some(JobFormState {
             mode: JobFormMode::Create,
             job,
             field_index: 0,
@@ -703,25 +718,25 @@ impl App {
     }
 
     fn open_job_form_edit(&mut self, job_id: Uuid) {
-        if let Ok(job) = self.job_service.get_job(&job_id) {
+        if let Ok(job) = self.services.job_service.get_job(&job_id) {
             let mut inputs: Vec<TextInput> = (0..20).map(|_| TextInput::new()).collect();
             // Pre-fill inputs from job
             inputs[0].set_value(&job.name);
             inputs[1].set_value(job.description.as_deref().unwrap_or(""));
-            match &job.source {
+            match &job.transfer.source {
                 rsync_core::models::job::StorageLocation::Local { path } => {
                     inputs[2].set_value(path);
                 }
                 _ => {}
             }
-            match &job.destination {
+            match &job.transfer.destination {
                 rsync_core::models::job::StorageLocation::Local { path } => {
                     inputs[3].set_value(path);
                 }
                 _ => {}
             }
 
-            self.job_form = Some(JobFormState {
+            self.overlays.job_form = Some(JobFormState {
                 mode: JobFormMode::Edit(job_id),
                 job,
                 field_index: 0,
@@ -736,35 +751,35 @@ impl App {
     fn handle_job_output_key(&mut self, key: KeyEvent) {
         match key.code {
             KeyCode::Esc | KeyCode::Char('q') => {
-                self.job_output = None;
+                self.overlays.job_output = None;
             }
             KeyCode::Char('j') | KeyCode::Down => {
-                if let Some(ref mut output) = self.job_output {
+                if let Some(ref mut output) = self.overlays.job_output {
                     output.follow = false;
                     output.scroll_offset = (output.scroll_offset + 1)
                         .min(output.log_lines.len().saturating_sub(1));
                 }
             }
             KeyCode::Char('k') | KeyCode::Up => {
-                if let Some(ref mut output) = self.job_output {
+                if let Some(ref mut output) = self.overlays.job_output {
                     output.follow = false;
                     output.scroll_offset = output.scroll_offset.saturating_sub(1);
                 }
             }
             KeyCode::Char('g') => {
-                if let Some(ref mut output) = self.job_output {
+                if let Some(ref mut output) = self.overlays.job_output {
                     output.follow = false;
                     output.scroll_offset = 0;
                 }
             }
             KeyCode::Char('G') => {
-                if let Some(ref mut output) = self.job_output {
+                if let Some(ref mut output) = self.overlays.job_output {
                     output.follow = true;
                     output.scroll_offset = output.log_lines.len().saturating_sub(1);
                 }
             }
             KeyCode::Char('f') => {
-                if let Some(ref mut output) = self.job_output {
+                if let Some(ref mut output) = self.overlays.job_output {
                     output.follow = !output.follow;
                     if output.follow {
                         output.scroll_offset = output.log_lines.len().saturating_sub(1);
@@ -772,19 +787,19 @@ impl App {
                 }
             }
             KeyCode::Char('c') => {
-                if let Some(ref output) = self.job_output {
-                    self.job_executor.cancel(&output.job_id);
+                if let Some(ref output) = self.overlays.job_output {
+                    self.services.job_executor.cancel(&output.job_id);
                 }
             }
             KeyCode::PageDown => {
-                if let Some(ref mut output) = self.job_output {
+                if let Some(ref mut output) = self.overlays.job_output {
                     output.follow = false;
                     output.scroll_offset = (output.scroll_offset + 20)
                         .min(output.log_lines.len().saturating_sub(1));
                 }
             }
             KeyCode::PageUp => {
-                if let Some(ref mut output) = self.job_output {
+                if let Some(ref mut output) = self.overlays.job_output {
                     output.follow = false;
                     output.scroll_offset = output.scroll_offset.saturating_sub(20);
                 }
@@ -796,7 +811,7 @@ impl App {
     // --- Job form keys ---
 
     fn handle_job_form_key(&mut self, key: KeyEvent) {
-        let form = match self.job_form.as_mut() {
+        let form = match self.overlays.job_form.as_mut() {
             Some(f) => f,
             None => return,
         };
@@ -822,7 +837,7 @@ impl App {
 
         match key.code {
             KeyCode::Esc => {
-                self.job_form = None;
+                self.overlays.job_form = None;
             }
             KeyCode::Tab | KeyCode::Char('j') | KeyCode::Down => {
                 form.field_index = (form.field_index + 1).min(form.field_inputs.len() - 1);
@@ -848,14 +863,14 @@ impl App {
     }
 
     fn save_job_form(&mut self) {
-        let form = match self.job_form.take() {
+        let form = match self.overlays.job_form.take() {
             Some(f) => f,
             None => return,
         };
 
         let result = match form.mode {
-            JobFormMode::Create => self.job_service.create_job(form.job),
-            JobFormMode::Edit(_) => self.job_service.update_job(form.job),
+            JobFormMode::Create => self.services.job_service.create_job(form.job),
+            JobFormMode::Edit(_) => self.services.job_service.update_job(form.job),
         };
 
         match result {
@@ -863,7 +878,7 @@ impl App {
                 self.refresh_jobs();
             }
             Err(e) => {
-                self.popup = Some(PopupKind::Error(format!("Failed to save job: {}", e)));
+                self.overlays.popup = Some(PopupKind::Error(format!("Failed to save job: {}", e)));
             }
         }
     }
@@ -871,31 +886,31 @@ impl App {
     // --- History page keys ---
 
     fn handle_history_key(&mut self, key: KeyEvent) {
-        let len = self.history_state.invocations.len();
+        let len = self.pages.history.invocations.len();
         match key.code {
             KeyCode::Char('j') | KeyCode::Down => {
                 if len > 0 {
-                    self.history_state.selected = (self.history_state.selected + 1).min(len - 1);
+                    self.pages.history.selected = (self.pages.history.selected + 1).min(len - 1);
                 }
             }
             KeyCode::Char('k') | KeyCode::Up => {
-                self.history_state.selected = self.history_state.selected.saturating_sub(1);
+                self.pages.history.selected = self.pages.history.selected.saturating_sub(1);
             }
             KeyCode::Enter => {
-                if let Some(inv) = self.history_state.invocations.get(self.history_state.selected) {
-                    if let Some(ref path) = inv.log_file_path {
+                if let Some(inv) = self.pages.history.invocations.get(self.pages.history.selected) {
+                    if let Some(ref path) = inv.execution_output.log_file_path {
                         if let Ok(content) = std::fs::read_to_string(path) {
-                            self.history_state.log_lines =
+                            self.pages.history.log_lines =
                                 content.lines().map(String::from).collect();
-                            self.history_state.log_scroll = 0;
-                            self.history_state.viewing_log = true;
+                            self.pages.history.log_scroll = 0;
+                            self.pages.history.viewing_log = true;
                         }
                     }
                 }
             }
             KeyCode::Char('d') => {
-                if let Some(inv) = self.history_state.invocations.get(self.history_state.selected) {
-                    self.popup = Some(PopupKind::Confirm {
+                if let Some(inv) = self.pages.history.invocations.get(self.pages.history.selected) {
+                    self.overlays.popup = Some(PopupKind::Confirm {
                         title: "Delete Invocation".to_string(),
                         message: "Delete this invocation record?".to_string(),
                         action: ConfirmAction::DeleteInvocation(inv.id),
@@ -909,28 +924,28 @@ impl App {
     fn handle_log_viewer_key(&mut self, key: KeyEvent) {
         match key.code {
             KeyCode::Esc | KeyCode::Char('q') => {
-                self.history_state.viewing_log = false;
+                self.pages.history.viewing_log = false;
             }
             KeyCode::Char('j') | KeyCode::Down => {
-                self.history_state.log_scroll = (self.history_state.log_scroll + 1)
-                    .min(self.history_state.log_lines.len().saturating_sub(1));
+                self.pages.history.log_scroll = (self.pages.history.log_scroll + 1)
+                    .min(self.pages.history.log_lines.len().saturating_sub(1));
             }
             KeyCode::Char('k') | KeyCode::Up => {
-                self.history_state.log_scroll = self.history_state.log_scroll.saturating_sub(1);
+                self.pages.history.log_scroll = self.pages.history.log_scroll.saturating_sub(1);
             }
             KeyCode::Char('g') => {
-                self.history_state.log_scroll = 0;
+                self.pages.history.log_scroll = 0;
             }
             KeyCode::Char('G') => {
-                self.history_state.log_scroll =
-                    self.history_state.log_lines.len().saturating_sub(1);
+                self.pages.history.log_scroll =
+                    self.pages.history.log_lines.len().saturating_sub(1);
             }
             KeyCode::PageDown => {
-                self.history_state.log_scroll = (self.history_state.log_scroll + 20)
-                    .min(self.history_state.log_lines.len().saturating_sub(1));
+                self.pages.history.log_scroll = (self.pages.history.log_scroll + 20)
+                    .min(self.pages.history.log_lines.len().saturating_sub(1));
             }
             KeyCode::PageUp => {
-                self.history_state.log_scroll = self.history_state.log_scroll.saturating_sub(20);
+                self.pages.history.log_scroll = self.pages.history.log_scroll.saturating_sub(20);
             }
             _ => {}
         }
@@ -941,32 +956,32 @@ impl App {
     fn handle_statistics_key(&mut self, key: KeyEvent) {
         match key.code {
             KeyCode::Char('r') => {
-                self.popup = Some(PopupKind::Confirm {
+                self.overlays.popup = Some(PopupKind::Confirm {
                     title: "Reset Statistics".to_string(),
                     message: "Reset all statistics? This cannot be undone.".to_string(),
                     action: ConfirmAction::ResetStatistics,
                 });
             }
             KeyCode::Char('e') => {
-                if let Ok(json) = self.statistics_service.export() {
+                if let Ok(json) = self.services.statistics_service.export() {
                     let path = format!(
                         "{}/statistics-export.json",
-                        self.job_executor.default_log_dir()
+                        self.services.job_executor.default_log_dir()
                     );
                     if std::fs::write(&path, &json).is_ok() {
-                        self.popup = Some(PopupKind::Error(format!("Exported to {}", path)));
+                        self.overlays.popup = Some(PopupKind::Error(format!("Exported to {}", path)));
                     }
                 }
             }
             KeyCode::Char('j') | KeyCode::Down => {
-                let len = self.statistics_state.per_job.len();
+                let len = self.pages.statistics.per_job.len();
                 if len > 0 {
-                    self.statistics_state.selected =
-                        (self.statistics_state.selected + 1).min(len - 1);
+                    self.pages.statistics.selected =
+                        (self.pages.statistics.selected + 1).min(len - 1);
                 }
             }
             KeyCode::Char('k') | KeyCode::Up => {
-                self.statistics_state.selected = self.statistics_state.selected.saturating_sub(1);
+                self.pages.statistics.selected = self.pages.statistics.selected.saturating_sub(1);
             }
             _ => {}
         }
@@ -977,13 +992,13 @@ impl App {
     fn handle_tools_key(&mut self, key: KeyEvent) {
         match key.code {
             KeyCode::Tab => {
-                self.tools_state.active_tab = (self.tools_state.active_tab + 1) % 2;
+                self.pages.tools.active_tab = (self.pages.tools.active_tab + 1) % 2;
             }
             KeyCode::Enter | KeyCode::Char('i') => {
-                if self.tools_state.active_tab == 0 {
-                    self.tools_state.command_input.is_focused = true;
+                if self.pages.tools.active_tab == 0 {
+                    self.pages.tools.command_input.is_focused = true;
                 } else {
-                    self.tools_state.scrub_input.is_focused = true;
+                    self.pages.tools.scrub_input.is_focused = true;
                 }
             }
             _ => {}
@@ -991,36 +1006,36 @@ impl App {
     }
 
     fn handle_tools_input_key(&mut self, key: KeyEvent) {
-        if self.tools_state.command_input.is_focused {
+        if self.pages.tools.command_input.is_focused {
             match key.code {
                 KeyCode::Esc => {
-                    self.tools_state.command_input.is_focused = false;
+                    self.pages.tools.command_input.is_focused = false;
                 }
                 KeyCode::Enter => {
-                    let cmd = self.tools_state.command_input.value().to_string();
-                    self.tools_state.command_input.is_focused = false;
+                    let cmd = self.pages.tools.command_input.value().to_string();
+                    self.pages.tools.command_input.is_focused = false;
                     match command_parser::parse_rsync_command(&cmd) {
                         Ok(parsed) => {
-                            self.tools_state.explanation = Some(command_explainer::explain_command(&parsed));
-                            self.tools_state.explanation_error = None;
+                            self.pages.tools.explanation = Some(command_explainer::explain_command(&parsed));
+                            self.pages.tools.explanation_error = None;
                         }
                         Err(e) => {
-                            self.tools_state.explanation = None;
-                            self.tools_state.explanation_error = Some(e);
+                            self.pages.tools.explanation = None;
+                            self.pages.tools.explanation_error = Some(e);
                         }
                     }
                 }
                 _ => {
-                    self.tools_state.command_input.handle_key(key);
+                    self.pages.tools.command_input.handle_key(key);
                 }
             }
-        } else if self.tools_state.scrub_input.is_focused {
+        } else if self.pages.tools.scrub_input.is_focused {
             match key.code {
                 KeyCode::Esc => {
-                    self.tools_state.scrub_input.is_focused = false;
+                    self.pages.tools.scrub_input.is_focused = false;
                 }
                 _ => {
-                    self.tools_state.scrub_input.handle_key(key);
+                    self.pages.tools.scrub_input.handle_key(key);
                 }
             }
         }
@@ -1032,25 +1047,25 @@ impl App {
         let settings_count = 5; // log_dir, max_age, max_per_job, auto_slash, theme
         match key.code {
             KeyCode::Char('j') | KeyCode::Down => {
-                self.settings_state.selected =
-                    (self.settings_state.selected + 1).min(settings_count - 1);
+                self.pages.settings.selected =
+                    (self.pages.settings.selected + 1).min(settings_count - 1);
             }
             KeyCode::Char('k') | KeyCode::Up => {
-                self.settings_state.selected = self.settings_state.selected.saturating_sub(1);
+                self.pages.settings.selected = self.pages.settings.selected.saturating_sub(1);
             }
             KeyCode::Enter => {
-                self.settings_state.editing = true;
+                self.pages.settings.editing = true;
                 // Pre-fill the input with current value
-                let val = match self.settings_state.selected {
-                    0 => self.settings_state.log_directory.clone(),
-                    1 => self.settings_state.max_log_age_days.to_string(),
-                    2 => self.settings_state.max_history_per_job.to_string(),
+                let val = match self.pages.settings.selected {
+                    0 => self.pages.settings.log_directory.clone(),
+                    1 => self.pages.settings.max_log_age_days.to_string(),
+                    2 => self.pages.settings.max_history_per_job.to_string(),
                     3 => {
                         // Toggle boolean
-                        let new_val = !self.settings_state.auto_trailing_slash;
-                        let _ = self.settings_service.set_auto_trailing_slash(new_val);
-                        self.settings_state.auto_trailing_slash = new_val;
-                        self.settings_state.editing = false;
+                        let new_val = !self.pages.settings.auto_trailing_slash;
+                        let _ = self.services.settings_service.set_auto_trailing_slash(new_val);
+                        self.pages.settings.auto_trailing_slash = new_val;
+                        self.pages.settings.editing = false;
                         return;
                     }
                     4 => {
@@ -1058,31 +1073,31 @@ impl App {
                         let names = theme::theme_names();
                         let idx = names
                             .iter()
-                            .position(|n| n.eq_ignore_ascii_case(&self.settings_state.tui_theme))
+                            .position(|n| n.eq_ignore_ascii_case(&self.pages.settings.tui_theme))
                             .unwrap_or(0);
                         let next = (idx + 1) % names.len();
                         let new_theme = names[next].to_string();
-                        let _ = self.settings_service.set_setting("tui_theme", &new_theme);
-                        self.settings_state.tui_theme = new_theme.clone();
+                        let _ = self.services.settings_service.set_setting("tui_theme", &new_theme);
+                        self.pages.settings.tui_theme = new_theme.clone();
                         self.theme = theme::get_theme(&new_theme);
-                        self.settings_state.editing = false;
+                        self.pages.settings.editing = false;
                         return;
                     }
                     _ => String::new(),
                 };
-                self.settings_state.edit_input.set_value(&val);
-                self.settings_state.edit_input.is_focused = true;
+                self.pages.settings.edit_input.set_value(&val);
+                self.pages.settings.edit_input.is_focused = true;
             }
             KeyCode::Char('e') => {
                 // Export jobs
-                if let Ok(jobs) = self.job_service.list_jobs() {
+                if let Ok(jobs) = self.services.job_service.list_jobs() {
                     if let Ok(json) = rsync_core::services::export_import::export_jobs(jobs) {
                         let path = format!(
                             "{}/jobs-export.json",
-                            self.job_executor.default_log_dir()
+                            self.services.job_executor.default_log_dir()
                         );
                         if std::fs::write(&path, &json).is_ok() {
-                            self.popup = Some(PopupKind::Error(format!("Exported to {}", path)));
+                            self.overlays.popup = Some(PopupKind::Error(format!("Exported to {}", path)));
                         }
                     }
                 }
@@ -1094,53 +1109,53 @@ impl App {
     fn handle_settings_edit_key(&mut self, key: KeyEvent) {
         match key.code {
             KeyCode::Esc => {
-                self.settings_state.editing = false;
-                self.settings_state.edit_input.is_focused = false;
+                self.pages.settings.editing = false;
+                self.pages.settings.edit_input.is_focused = false;
             }
             KeyCode::Enter => {
-                let val = self.settings_state.edit_input.value().to_string();
-                self.settings_state.editing = false;
-                self.settings_state.edit_input.is_focused = false;
+                let val = self.pages.settings.edit_input.value().to_string();
+                self.pages.settings.editing = false;
+                self.pages.settings.edit_input.is_focused = false;
 
-                match self.settings_state.selected {
+                match self.pages.settings.selected {
                     0 => {
-                        let _ = self.settings_service.set_log_directory(&val);
-                        self.settings_state.log_directory = val;
+                        let _ = self.services.settings_service.set_log_directory(&val);
+                        self.pages.settings.log_directory = val;
                     }
                     1 => {
                         if let Ok(days) = val.parse::<u32>() {
-                            let _ = self.settings_service.set_retention_settings(
-                                &rsync_core::services::settings_service::RetentionSettings {
+                            let _ = self.services.settings_service.set_retention_settings(
+                                &rsync_core::models::settings::RetentionSettings {
                                     max_log_age_days: days,
-                                    max_history_per_job: self.settings_state.max_history_per_job,
+                                    max_history_per_job: self.pages.settings.max_history_per_job,
                                 },
                             );
-                            self.settings_state.max_log_age_days = days;
+                            self.pages.settings.max_log_age_days = days;
                         }
                     }
                     2 => {
                         if let Ok(max) = val.parse::<usize>() {
-                            let _ = self.settings_service.set_retention_settings(
-                                &rsync_core::services::settings_service::RetentionSettings {
-                                    max_log_age_days: self.settings_state.max_log_age_days,
+                            let _ = self.services.settings_service.set_retention_settings(
+                                &rsync_core::models::settings::RetentionSettings {
+                                    max_log_age_days: self.pages.settings.max_log_age_days,
                                     max_history_per_job: max,
                                 },
                             );
-                            self.settings_state.max_history_per_job = max;
+                            self.pages.settings.max_history_per_job = max;
                         }
                     }
                     _ => {}
                 }
             }
             _ => {
-                self.settings_state.edit_input.handle_key(key);
+                self.pages.settings.edit_input.handle_key(key);
             }
         }
     }
 
     /// Get the count of currently running jobs.
     pub fn running_count(&self) -> usize {
-        self.job_executor.running_job_ids().len()
+        self.services.job_executor.running_job_ids().len()
     }
 }
 
@@ -1150,10 +1165,10 @@ fn apply_form_field(form: &mut JobFormState) {
         0 => form.job.name = val,
         1 => form.job.description = if val.is_empty() { None } else { Some(val) },
         2 => {
-            form.job.source = rsync_core::models::job::StorageLocation::Local { path: val };
+            form.job.transfer.source = rsync_core::models::job::StorageLocation::Local { path: val };
         }
         3 => {
-            form.job.destination = rsync_core::models::job::StorageLocation::Local { path: val };
+            form.job.transfer.destination = rsync_core::models::job::StorageLocation::Local { path: val };
         }
         // Options toggles would go here, handled differently
         _ => {}

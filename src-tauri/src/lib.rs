@@ -14,7 +14,8 @@ use rsync_core::services::job_executor::JobExecutor;
 use rsync_core::services::job_service::JobService;
 use rsync_core::services::retention_runner;
 use rsync_core::services::running_jobs::RunningJobs;
-use rsync_core::services::scheduler_backend::{InProcessScheduler, SchedulerBackend, SchedulerConfig};
+use rsync_core::models::schedule::SchedulerConfig;
+use rsync_core::services::scheduler_backend::{InProcessScheduler, SchedulerBackend};
 use rsync_core::services::settings_service::SettingsService;
 use rsync_core::services::statistics_service::StatisticsService;
 
@@ -226,6 +227,12 @@ pub fn run() {
             commands::detect_filesystem_type,
             commands::get_nas_auto_detect,
             commands::set_nas_auto_detect,
+            commands::get_show_file_handling_options,
+            commands::set_show_file_handling_options,
+            commands::get_show_metadata_options,
+            commands::set_show_metadata_options,
+            commands::get_show_output_options,
+            commands::set_show_output_options,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

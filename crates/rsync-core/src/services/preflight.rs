@@ -17,11 +17,11 @@ pub fn run_preflight(
     let mut checks = Vec::new();
 
     checks.push(check_rsync_installed(rsync));
-    checks.push(check_source_exists(&job.source, fs));
-    checks.push(check_destination_writable(&job.destination, fs));
-    checks.push(check_disk_space(&job.source, &job.destination, fs));
+    checks.push(check_source_exists(&job.transfer.source, fs));
+    checks.push(check_destination_writable(&job.transfer.destination, fs));
+    checks.push(check_disk_space(&job.transfer.source, &job.transfer.destination, fs));
 
-    if is_remote(&job.source) || is_remote(&job.destination) {
+    if is_remote(&job.transfer.source) || is_remote(&job.transfer.destination) {
         checks.push(check_ssh_connectivity(job, rsync));
     }
 
@@ -189,11 +189,11 @@ fn check_ssh_connectivity(job: &JobDefinition, rsync: &dyn RsyncClient) -> Valid
     use crate::services::command_builder;
 
     let mut test_job = job.clone();
-    test_job.options.dry_run = true;
+    test_job.options.core_transfer.dry_run = true;
 
     let args = command_builder::build_rsync_args(
-        &test_job.source,
-        &test_job.destination,
+        &test_job.transfer.source,
+        &test_job.transfer.destination,
         &test_job.options,
         test_job.ssh_config.as_ref(),
         None,
@@ -400,13 +400,15 @@ mod tests {
             id: Uuid::new_v4(),
             name: "Test".to_string(),
             description: None,
-            source: StorageLocation::Local {
-                path: "/source".to_string(),
+            transfer: TransferConfig {
+                source: StorageLocation::Local {
+                    path: "/source".to_string(),
+                },
+                destination: StorageLocation::Local {
+                    path: "/dest".to_string(),
+                },
+                backup_mode: BackupMode::Mirror,
             },
-            destination: StorageLocation::Local {
-                path: "/dest".to_string(),
-            },
-            backup_mode: BackupMode::Mirror,
             options: RsyncOptions::default(),
             ssh_config: None,
             schedule: None,
@@ -418,7 +420,7 @@ mod tests {
 
     fn remote_job() -> JobDefinition {
         let mut job = local_job();
-        job.destination = StorageLocation::RemoteSsh {
+        job.transfer.destination = StorageLocation::RemoteSsh {
             user: "user".to_string(),
             host: "server".to_string(),
             port: 22,
@@ -552,7 +554,7 @@ mod tests {
     #[test]
     fn remote_source_skips_local_exists_check() {
         let mut job = local_job();
-        job.source = StorageLocation::RemoteSsh {
+        job.transfer.source = StorageLocation::RemoteSsh {
             user: "user".to_string(),
             host: "server".to_string(),
             port: 22,
