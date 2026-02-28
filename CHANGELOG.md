@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.2](https://github.com/alleato-llc/rsync-studio/compare/rsync-studio-v0.1.1...rsync-studio-v0.1.2) (2026-02-28)
+
+
+### Features
+
+* **website:** use app icon, add screenshots, update BMC link ([6fd521d](https://github.com/alleato-llc/rsync-studio/commit/6fd521ddf6bfe7530b9a4b9ea3ad684f4c73d649))
+* **website:** use app icon, add screenshots, update BMC link ([ebf7937](https://github.com/alleato-llc/rsync-studio/commit/ebf7937a6586f242b51adae120417519ceaa2ab9))
+
 ## [0.1.1](https://github.com/alleato-llc/rsync-studio/compare/rsync-studio-v0.1.0...rsync-studio-v0.1.1) (2026-02-26)
 
 
