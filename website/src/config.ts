@@ -140,8 +140,13 @@ export const config = {
     lightboxNavigation: true,
   },
 
-  // Screenshots (starts empty — conditionally rendered)
-  screenshots: [] as { src: string; alt: string; caption: string }[],
+  // Screenshots
+  screenshots: [
+    { src: "/screenshots/create-job.png", alt: "Create Job", caption: "Configure rsync jobs with a visual builder and live command preview" },
+    { src: "/screenshots/tools.png", alt: "Command Tools", caption: "Paste any rsync command to see what each flag does" },
+    { src: "/screenshots/settings.png", alt: "Settings", caption: "Customize themes, retention policies, and app behavior" },
+    { src: "/screenshots/about.png", alt: "About", caption: "Built with Rust, Tauri, and React" },
+  ],
 
   // Architecture diagram
   architecture: {
@@ -289,8 +294,8 @@ export const config = {
   // Buy Me a Coffee
   buymeacoffee: {
     enabled: true,
-    username: "nycjv321",
-    url: "https://buymeacoffee.com/nycjv321",
+    username: "alleato",
+    url: "https://buymeacoffee.com/alleato",
     buttonText: "Buy me a coffee",
     message:
       "Rsync Studio is free, open source, and built in the open. If it saves you time, consider fueling the next feature.",
