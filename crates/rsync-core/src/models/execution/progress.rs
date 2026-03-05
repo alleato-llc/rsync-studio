@@ -1,22 +1,29 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 use uuid::Uuid;
 
 use crate::models::job::JobStatus;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export_to = "execution/")]
 pub struct ProgressUpdate {
     pub invocation_id: Uuid,
+    #[ts(type = "number")]
     pub bytes_transferred: u64,
     pub percentage: f64,
     pub transfer_rate: String,
     pub elapsed: String,
+    #[ts(type = "number")]
     pub files_transferred: u64,
+    #[ts(type = "number")]
     pub files_remaining: u64,
+    #[ts(type = "number")]
     pub files_total: u64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export_to = "execution/")]
 pub struct LogLine {
     pub invocation_id: Uuid,
     pub timestamp: DateTime<Utc>,
@@ -24,7 +31,8 @@ pub struct LogLine {
     pub is_stderr: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export_to = "execution/")]
 pub struct JobStatusEvent {
     pub job_id: Uuid,
     pub invocation_id: Uuid,

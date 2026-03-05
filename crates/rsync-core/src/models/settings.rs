@@ -1,12 +1,15 @@
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export_to = "settings/")]
 pub struct RetentionSettings {
     pub max_log_age_days: u32,
     pub max_history_per_job: usize,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export_to = "settings/")]
 pub struct DryModeSettings {
     pub itemize_changes: bool,
     pub checksum: bool,

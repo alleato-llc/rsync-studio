@@ -1,10 +1,2 @@
-export type LogLevel = "Debug" | "Info" | "Warning" | "Error";
-
-export interface LogEntry {
-  id: string;
-  invocation_id: string;
-  job_id: string;
-  timestamp: string;
-  level: LogLevel;
-  message: string;
-}
+export type { LogLevel } from "../generated/execution/LogLevel";
+export type { LogEntry } from "../generated/execution/LogEntry";

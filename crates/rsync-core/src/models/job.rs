@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 use uuid::Uuid;
 
 use super::schedule::ScheduleConfig;
@@ -9,7 +10,8 @@ pub use super::rsync_options::{
     RsyncOptions,
 };
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export_to = "job/")]
 #[serde(tag = "type")]
 pub enum BackupMode {
     Mirror,
@@ -21,7 +23,8 @@ pub enum BackupMode {
     },
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export_to = "job/")]
 pub struct RetentionPolicy {
     #[serde(default = "default_keep_daily")]
     pub keep_daily: u32,
@@ -51,7 +54,8 @@ impl Default for RetentionPolicy {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export_to = "job/")]
 #[serde(tag = "type")]
 pub enum StorageLocation {
     Local {
@@ -90,7 +94,8 @@ impl StorageLocation {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export_to = "job/")]
 pub struct SshConfig {
     #[serde(default = "default_ssh_port")]
     pub port: u16,
@@ -115,14 +120,16 @@ impl Default for SshConfig {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export_to = "job/")]
 pub struct TransferConfig {
     pub source: StorageLocation,
     pub destination: StorageLocation,
     pub backup_mode: BackupMode,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export_to = "job/")]
 pub struct JobDefinition {
     pub id: Uuid,
     pub name: String,
@@ -136,7 +143,8 @@ pub struct JobDefinition {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export_to = "job/")]
 pub enum JobStatus {
     Idle,
     Running,
@@ -145,7 +153,8 @@ pub enum JobStatus {
     Cancelled,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export_to = "job/")]
 pub struct ExportData {
     pub version: u32,
     pub exported_at: DateTime<Utc>,

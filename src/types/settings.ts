@@ -1,9 +1,2 @@
-export interface RetentionSettings {
-  max_log_age_days: number;
-  max_history_per_job: number;
-}
-
-export interface DryModeSettings {
-  itemize_changes: boolean;
-  checksum: boolean;
-}
+export type { RetentionSettings } from "./generated/settings/RetentionSettings";
+export type { DryModeSettings } from "./generated/settings/DryModeSettings";

@@ -1,7 +1,9 @@
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 /// A single argument with its explanation.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export_to = "command/")]
 pub struct ArgumentExplanation {
     /// The raw argument as it appeared in the command
     pub argument: String,
@@ -11,7 +13,8 @@ pub struct ArgumentExplanation {
     pub category: ArgCategory,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export_to = "command/")]
 pub enum ArgCategory {
     Flag,
     Pattern,
@@ -26,7 +29,8 @@ pub enum ArgCategory {
 }
 
 /// Full explanation of a parsed rsync command.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export_to = "command/")]
 pub struct CommandExplanation {
     /// Per-argument explanations
     pub arguments: Vec<ArgumentExplanation>,
@@ -35,7 +39,8 @@ pub struct CommandExplanation {
 }
 
 /// Result of parsing an rsync command string.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export_to = "command/")]
 pub struct ParsedCommand {
     /// The source path/location as a raw string
     pub source: Option<String>,
@@ -48,6 +53,7 @@ pub struct ParsedCommand {
     /// Include patterns found
     pub include_patterns: Vec<String>,
     /// Bandwidth limit if specified
+    #[ts(type = "number | null")]
     pub bandwidth_limit: Option<u64>,
     /// SSH command string if -e was used
     pub ssh_command: Option<String>,

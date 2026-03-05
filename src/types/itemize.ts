@@ -1,31 +1,4 @@
-export type TransferType =
-  | "Sent"
-  | "Received"
-  | "LocalChange"
-  | "NoUpdate"
-  | "Message";
-
-export type FileType =
-  | "File"
-  | "Directory"
-  | "Symlink"
-  | "Device"
-  | "Special";
-
-export type DifferenceKind =
-  | "Checksum"
-  | "Size"
-  | "Timestamp"
-  | "Permissions"
-  | "Owner"
-  | "Group"
-  | "Acl"
-  | "ExtendedAttributes"
-  | "NewlyCreated";
-
-export interface ItemizedChange {
-  transfer_type: TransferType;
-  file_type: FileType;
-  differences: DifferenceKind[];
-  path: string;
-}
+export type { ItemizedChange } from "./generated/execution/ItemizedChange";
+export type { TransferType } from "./generated/execution/TransferType";
+export type { FileType } from "./generated/execution/FileType";
+export type { DifferenceKind } from "./generated/execution/DifferenceKind";

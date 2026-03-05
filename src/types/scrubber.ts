@@ -1,9 +1,2 @@
-export interface ScrubScanResult {
-  file_path: string;
-  match_count: number;
-}
-
-export interface ScrubApplyResult {
-  file_path: string;
-  replacements: number;
-}
+export type { ScrubScanResult } from "./generated/scrubber/ScrubScanResult";
+export type { ScrubApplyResult } from "./generated/scrubber/ScrubApplyResult";

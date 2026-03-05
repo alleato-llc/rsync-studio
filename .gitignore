@@ -16,6 +16,9 @@ dist/
 *.swo
 *~
 
+# Generated TypeScript types (ts-rs)
+src/types/generated/
+
 # Claude Code
 .claude/
 

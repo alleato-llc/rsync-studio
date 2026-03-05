@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export_to = "execution/")]
 pub struct ItemizedChange {
     pub transfer_type: TransferType,
     pub file_type: FileType,
@@ -8,7 +10,8 @@ pub struct ItemizedChange {
     pub path: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export_to = "execution/")]
 pub enum TransferType {
     Sent,        // >
     Received,    // <
@@ -17,7 +20,8 @@ pub enum TransferType {
     Message,     // * (e.g., *deleting)
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export_to = "execution/")]
 pub enum FileType {
     File,      // f
     Directory, // d
@@ -26,7 +30,8 @@ pub enum FileType {
     Special,   // S
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export_to = "execution/")]
 pub enum DifferenceKind {
     Checksum,           // c (position 2)
     Size,               // s (position 3)

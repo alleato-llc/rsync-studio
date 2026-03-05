@@ -1,10 +1,12 @@
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 fn default_true() -> bool {
     true
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export_to = "job/")]
 pub struct CoreTransferOptions {
     #[serde(default = "default_true")]
     pub archive: bool,
@@ -27,7 +29,8 @@ impl Default for CoreTransferOptions {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export_to = "job/")]
 pub struct FileHandlingOptions {
     #[serde(default)]
     pub delete: bool,
@@ -59,7 +62,8 @@ impl Default for FileHandlingOptions {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export_to = "job/")]
 pub struct MetadataOptions {
     #[serde(default)]
     pub hard_links: bool,
@@ -82,7 +86,8 @@ impl Default for MetadataOptions {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export_to = "job/")]
 pub struct OutputOptions {
     #[serde(default)]
     pub verbose: bool,
@@ -108,12 +113,14 @@ impl Default for OutputOptions {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export_to = "job/")]
 pub struct AdvancedOptions {
     #[serde(default)]
     pub exclude_patterns: Vec<String>,
     #[serde(default)]
     pub include_patterns: Vec<String>,
+    #[ts(type = "number | null")]
     pub bandwidth_limit: Option<u64>,
     #[serde(default)]
     pub custom_args: Vec<String>,
@@ -130,7 +137,8 @@ impl Default for AdvancedOptions {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export_to = "job/")]
 pub struct RsyncOptions {
     #[serde(default)]
     pub core_transfer: CoreTransferOptions,

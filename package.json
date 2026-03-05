@@ -4,8 +4,9 @@
   "version": "0.1.2",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
+    "dev": "npm run generate-types && vite",
+    "generate-types": "cargo run -p rsync-typegen",
+    "build": "npm run generate-types && tsc && vite build",
     "preview": "vite preview",
     "tauri": "tauri"
   },

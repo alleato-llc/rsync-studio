@@ -1,17 +1,23 @@
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export_to = "schedule/")]
 pub struct ScheduleConfig {
     pub schedule_type: ScheduleType,
     #[serde(default)]
     pub enabled: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export_to = "schedule/")]
 #[serde(tag = "type")]
 pub enum ScheduleType {
     Cron { expression: String },
-    Interval { minutes: u64 },
+    Interval {
+        #[ts(type = "number")]
+        minutes: u64,
+    },
 }
 
 pub struct SchedulerConfig {

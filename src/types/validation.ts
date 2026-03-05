@@ -1,21 +1,4 @@
-export interface PreflightResult {
-  job_id: string;
-  checks: ValidationCheck[];
-  overall_pass: boolean;
-}
-
-export interface ValidationCheck {
-  check_type: CheckType;
-  passed: boolean;
-  message: string;
-  severity: CheckSeverity;
-}
-
-export type CheckType =
-  | "SourceExists"
-  | "DestinationWritable"
-  | "DiskSpace"
-  | "SshConnectivity"
-  | "RsyncInstalled";
-
-export type CheckSeverity = "Error" | "Warning";
+export type { PreflightResult } from "./generated/validation/PreflightResult";
+export type { ValidationCheck } from "./generated/validation/ValidationCheck";
+export type { CheckType } from "./generated/validation/CheckType";
+export type { CheckSeverity } from "./generated/validation/CheckSeverity";

@@ -1,15 +1,21 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default, TS)]
+#[ts(export_to = "execution/")]
 pub struct TransferStats {
+    #[ts(type = "number")]
     pub bytes_transferred: u64,
+    #[ts(type = "number")]
     pub files_transferred: u64,
+    #[ts(type = "number")]
     pub total_files: u64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export_to = "execution/")]
 pub struct ExecutionOutput {
     pub command_executed: String,
     pub exit_code: Option<i32>,
@@ -28,7 +34,8 @@ impl Default for ExecutionOutput {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export_to = "execution/")]
 pub struct BackupInvocation {
     pub id: Uuid,
     pub job_id: Uuid,
@@ -40,7 +47,8 @@ pub struct BackupInvocation {
     pub execution_output: ExecutionOutput,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export_to = "execution/")]
 pub enum InvocationStatus {
     Running,
     Succeeded,
@@ -48,13 +56,15 @@ pub enum InvocationStatus {
     Cancelled,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export_to = "execution/")]
 pub enum InvocationTrigger {
     Manual,
     Scheduled,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export_to = "execution/")]
 pub struct SnapshotRecord {
     pub id: Uuid,
     pub job_id: Uuid,
@@ -62,7 +72,9 @@ pub struct SnapshotRecord {
     pub snapshot_path: String,
     pub link_dest_path: Option<String>,
     pub created_at: DateTime<Utc>,
+    #[ts(type = "number")]
     pub size_bytes: u64,
+    #[ts(type = "number")]
     pub file_count: u64,
     pub is_latest: bool,
 }

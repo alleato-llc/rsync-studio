@@ -1,0 +1,8 @@
+[package]
+name = "rsync-typegen"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+rsync-core = { path = "../rsync-core" }
+ts-rs = { version = "10", features = ["chrono-impl", "uuid-impl"] }
